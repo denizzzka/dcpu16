@@ -93,6 +93,9 @@ pure struct CPU
                 default:
                     enforce("Opcode isn't defined");
             }
+
+            if(*a < 0x1f) // operand is not literal value
+                *a = r;
         }
         else
             assert("Unimplemented");
@@ -146,6 +149,7 @@ pure struct CPU
                 return &mem[pc++];
 
             default: // literal values
+                enforce(isA, "Wrong B operand");
                 ubyte tmp = cast(ubyte) operand;
                 tmp -= 0x21;
                 operand = tmp;
