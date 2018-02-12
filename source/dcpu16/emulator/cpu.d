@@ -53,8 +53,10 @@ pure struct CPU
         Instruction curr = Instruction(mem[regs.pc]);
     }
 
-    private void decodeOpcode(ref Instruction ins) pure
+    private void executeInstruction(ref Instruction ins) pure
     {
+        ushort res;
+
         if(!ins.spec_zeroes)
         {
             ushort* a = decodeOperand(ins.a, true);
@@ -63,7 +65,7 @@ pure struct CPU
             switch(ins.opcode)
             {
                 case 0x01: // SET
-                    *b = *a;
+                    res = *a;
                     break;
 
                 case 0x02: // ADD
@@ -136,10 +138,41 @@ pure struct CPU
     }
 }
 
+enum Opcodes
+{
+    SET = 0x01, /// sets b to a
+    ADD, /// sets b to b+a, sets EX to 0x0001 if there's an overflow, 0x0 otherwise
+    SUB, /// sets EX to 0xffff if there's an underflow, 0x0 otherwise
+    MUL, /// sets EX to ((b*a)>>16)&0xffff (treats b, a as unsigned)
+    MLI, /// like MUL, but treat b, a as signed
+    DIV, /// sets EX to ((b<<16)/a)&0xffff. if a==0, sets b and EX to 0 instead. (treats b, a as unsigned)
+    DVI, /// like DIV, but treat b, a as signed. Rounds towards 0
+    MOD, /// sets b to b%a. if a==0, sets b to 0 instead.
+    MDI, /// like MOD, but treat b, a as signed. (MDI -7, 16 == -7)
+    AND, /// sets b to b&a
+    BOR, /// sets b to b|a
+    XOR, /// sets b to b^a
+    SHR, /// sets b to b>>>a, sets EX to ((b<<16)>>a)&0xffff (logical shift)
+    ASR, /// sets b to b>>a, sets EX to ((b<<16)>>>a)&0xffff (arithmetic shift) (treats b as signed)
+    SHL, /// sets b to b<<a, sets EX to ((b<<a)>>16)&0xffff
+    IFB, /// performs next instruction only if (b&a)!=0
+    IFC, /// performs next instruction only if (b&a)==0
+    IFE, /// performs next instruction only if b==a
+    IFN, /// performs next instruction only if b!=a
+    IFG, /// performs next instruction only if b>a
+    IFA, /// performs next instruction only if b>a (signed)
+    IFL, /// performs next instruction only if b<a
+    IFU, /// performs next instruction only if b<a (signed)
+    ADX = 0x1a, /// sets b to b+a+EX, sets EX to 0x0001 if there is an overflow, 0x0 otherwise
+    SBX, /// sets b to b-a+EX, sets EX to 0xFFFF if there is an underflow, 0x0 otherwise
+    STI = 0x1e, /// sets b to a, then increases I and J by 1
+    STD, /// sets b to a, then decreases I and J by 1
+}
+
+import std.bitmanip: bitfields;
+
 struct Instruction
 {
-    import std.bitmanip: bitfields;
-
     ushort a;
     ushort b;
     ubyte opcode;
