@@ -14,8 +14,9 @@ class Computer
         cpu = CPU(&mem);
     }
 
-    void reset()
+    void reset() pure
     {
+        mem = Memory.init;
         cpu.reset();
     }
 
@@ -52,4 +53,5 @@ unittest
 {
     auto c = new Computer();
     c.load(new ubyte[10]);
+    c.reset();
 }

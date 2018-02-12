@@ -15,7 +15,7 @@ struct Registers
     ushort ex; /// extra/excess
     ushort ia; /// interrupt address
 
-    void reset()
+    void reset() pure
     {
         this = Registers();
     }
@@ -33,12 +33,12 @@ struct CPU
         _mem = m;
     }
 
-    Memory mem() inout
+    Memory mem() inout pure
     {
         return *_mem;
     }
 
-    void reset()
+    void reset() pure
     {
         regs.reset;
     }
@@ -48,7 +48,7 @@ struct CPU
         return Instruction(&this, mem[regs.pc]);
     }
 
-    private ushort decodeRegisterOperand(uint operand) const // TODO: arg should be ubyte type
+    private ushort decodeRegisterOperand(uint operand) const pure // TODO: arg should be ubyte type
     {
         with(regs)
         switch(operand)
@@ -67,7 +67,7 @@ struct CPU
         }
     }
 
-    ushort decodeOperand(ubyte operand) const
+    ushort decodeOperand(ubyte operand) const pure
     {
         // Operands codes boundaries:
         enum directRegister = 0x07;
@@ -93,7 +93,7 @@ struct CPU
     }
 }
 
-unittest
+pure unittest
 {
     Memory mem;
     auto cpu = CPU(&mem);
