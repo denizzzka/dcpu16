@@ -62,7 +62,7 @@ struct CPU
         }
     }
 
-    private ushort decodeOperand(ubyte operand, bool isA) const pure
+    private ushort decodeOperand(ubyte operand, bool isA) pure
     {
         import std.exception: enforce;
 
@@ -89,13 +89,18 @@ struct CPU
             return mem[address];
         }
 
-        assert(operand != 0x18, "Unimplemented");
-        assert(operand != 0x19, "Unimplemented");
-        assert(operand != 0x1a, "Unimplemented");
-
         with(regs)
         switch(operand)
         {
+            case 0x18: // PUSH / POP
+                return isA ? mem[sp++] : mem[--sp];
+
+            case 0x19: // PEEK
+                return mem[sp];
+
+            case 0x1a: // PICK n
+                return mem[ sp + mem[pc+1] ];
+
             case 0x1b:
                 return sp;
 
