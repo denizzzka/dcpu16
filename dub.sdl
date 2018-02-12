@@ -1,0 +1,5 @@
+name "dcpu-16"
+description "DCPU-16 emulator"
+authors "Denis Feklushkin"
+copyright "Copyright © 2018, Denis Feklushkin"
+license "MIT"
