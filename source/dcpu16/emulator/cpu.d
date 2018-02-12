@@ -18,7 +18,7 @@ struct Registers
             ushort j;
             ushort sp; /// stack pointer
             ushort pc; /// program counter
-            ushort ex; /// extra/excess
+            EXreg ex; /// extra/excess
             ushort ia; /// interrupt address
         }
     }
@@ -27,6 +27,23 @@ struct Registers
     {
         this = Registers();
     }
+}
+
+import std.bitmanip: bitfields;
+
+struct EXreg
+{
+    union
+    {
+        ushort ex;
+
+        mixin(bitfields!(
+            ubyte, "cf",    1,
+            ubyte, "xxxxx",    7,
+        ));
+    }
+
+    alias ex this;
 }
 
 import dcpu16.emulator: Memory;
@@ -55,23 +72,22 @@ pure struct CPU
 
     private void executeInstruction(ref Instruction ins) pure
     {
-        ushort res;
+        ushort r;
 
         if(!ins.spec_zeroes)
         {
             ushort* a = decodeOperand(ins.a, true);
             ushort* b = decodeOperand(ins.b, false);
 
+            with(Opcodes)
             switch(ins.opcode)
             {
-                case 0x01: // SET
-                    res = *a;
-                    break;
+                case SET: r = *a; break;
 
-                case 0x02: // ADD
-                    *b += *a;
-                    regs.ex = *b + *a > ushort.max ?
-                        regs.ex = 1 : 0;
+                case ADD:
+                    r += *b;
+                    r += *a;
+                    regs.ex.cf = *b + *a > ushort.max ? 1 : 0;
                     break;
 
                 default:
@@ -120,8 +136,8 @@ pure struct CPU
             case 0x1c:
                 return &pc;
 
-            case 0x1d:
-                return &ex;
+            case 0x1d: // EX
+                return &ex.ex;
 
             case 0x1e: // [next word]
                 return &mem[ mem[pc++] ];
@@ -168,8 +184,6 @@ enum Opcodes
     STI = 0x1e, /// sets b to a, then increases I and J by 1
     STD, /// sets b to a, then decreases I and J by 1
 }
-
-import std.bitmanip: bitfields;
 
 struct Instruction
 {
