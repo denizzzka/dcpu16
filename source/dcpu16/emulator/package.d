@@ -1,6 +1,6 @@
 module dcpu16.emulator;
 
-alias Memory = ushort[0x10000];
+alias Memory = ushort[];
 
 class Computer
 {
@@ -11,12 +11,14 @@ class Computer
 
     this() pure
     {
-        cpu = CPU(&mem);
+        mem.length = 0x10000;
+        cpu = CPU(mem);
     }
 
     void reset() pure
     {
-        mem = Memory.init;
+        mem.length = 0;
+        mem.length = 0x10000;
         cpu.reset();
     }
 

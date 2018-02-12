@@ -25,17 +25,12 @@ import dcpu16.emulator: Memory;
 
 struct CPU
 {
-    Memory* _mem;
+    Memory mem;
     Registers regs;
 
-    this(Memory* m) pure
+    this(ref Memory m) pure
     {
-        _mem = m;
-    }
-
-    Memory mem() inout pure
-    {
-        return *_mem;
+        mem = m;
     }
 
     void reset() pure
@@ -95,8 +90,8 @@ struct CPU
 
 pure unittest
 {
-    Memory mem;
-    auto cpu = CPU(&mem);
+    Memory mem = new ushort[0x10000];
+    auto cpu = CPU(mem);
     cpu.regs.x = 123;
     mem[123] = 456;
 
@@ -136,8 +131,8 @@ struct Instruction
 
 pure unittest
 {
-    Memory mem;
-    auto cpu = CPU(&mem);
+    Memory mem = new ushort[0x10000];
+    auto cpu = CPU(mem);
     auto i = Instruction(&cpu, 0b11111);
 
     assert(i.opcode == 0b11111);
