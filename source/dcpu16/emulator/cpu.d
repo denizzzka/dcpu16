@@ -76,26 +76,33 @@ pure struct CPU
 
         if(!ins.spec_zeroes)
         {
-            ushort* a = decodeOperand(ins.a, true);
-            ushort* b = decodeOperand(ins.b, false);
+            ushort* a_ptr = decodeOperand(ins.a, true);
+            ushort a = *a_ptr;
+            ushort b = *decodeOperand(ins.b, false);
 
             with(Opcodes)
             switch(ins.opcode)
             {
-                case SET: r = *a; break;
+                case SET: r = a; break;
 
                 case ADD:
-                    r += *b;
-                    r += *a;
-                    regs.ex.cf = *b + *a > ushort.max ? 1 : 0;
+                    r += b;
+                    r += a;
+                    regs.ex.cf = b + a > ushort.max ? 1 : 0;
+                    break;
+
+                case SUB:
+                    r -= b;
+                    r -= a;
+                    regs.ex.cf = b - a > ushort.max ? 1 : 0;
                     break;
 
                 default:
                     enforce("Opcode isn't defined");
             }
 
-            if(*a < 0x1f) // operand is not literal value
-                *a = r;
+            if(a < 0x1f) // operand is not literal value
+                *a_ptr = r;
         }
         else
             assert("Unimplemented");
