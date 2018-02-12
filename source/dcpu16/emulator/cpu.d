@@ -75,26 +75,26 @@ struct CPU
         }
     }
 
-    private ushort decodeRegisterOfOperand(uint operand) const pure // TODO: arg should be ubyte type
+    private ushort* decodeRegisterOfOperand(in uint operand) pure // TODO: arg should be ubyte type
     {
         with(regs)
         switch(operand)
         {
-            case 0x00: return a;
-            case 0x01: return b;
-            case 0x02: return c;
-            case 0x03: return x;
-            case 0x04: return y;
-            case 0x05: return z;
-            case 0x06: return i;
-            case 0x07: return j;
+            case 0x00: return &a;
+            case 0x01: return &b;
+            case 0x02: return &c;
+            case 0x03: return &x;
+            case 0x04: return &y;
+            case 0x05: return &z;
+            case 0x06: return &i;
+            case 0x07: return &j;
 
             default:
                 assert(false);
         }
     }
 
-    private ushort decodeOperand(ubyte operand, bool isA) pure
+    private ushort* decodeOperand(ref ushort operand, bool isA) pure
     {
         import std.exception: enforce;
 
@@ -107,38 +107,40 @@ struct CPU
                 return decodeRegisterOfOperand(operand);
 
             case 0x08: .. case 0x0f: // [register]
-                return mem[ decodeRegisterOfOperand(operand & 7) ];
+                return &mem[ *decodeRegisterOfOperand(operand & 7) ];
 
             case 0x10: .. case 0x17: // [register + next word]
-                return mem[ decodeRegisterOfOperand(operand & 7) + mem[regs.pc++] ];
+                return &mem[ *decodeRegisterOfOperand(operand & 7) + mem[regs.pc++] ];
 
             case 0x18: // PUSH / POP
-                return isA ? mem[sp++] : mem[--sp];
+                return isA ? &mem[sp++] : &mem[--sp];
 
             case 0x19: // PEEK
-                return mem[sp];
+                return &mem[sp];
 
             case 0x1a: // PICK n
-                return mem[ sp + mem[pc+1] ];
+                return &mem[ sp + mem[pc+1] ];
 
             case 0x1b:
-                return sp;
+                return &sp;
 
             case 0x1c:
-                return pc;
+                return &pc;
 
             case 0x1d:
-                return ex;
+                return &ex;
 
             case 0x1e: // [next word]
-                return mem[ mem[pc++] ];
+                return &mem[ mem[pc++] ];
 
             case 0x1f: // next word (literal)
-                return mem[pc++];
+                return &mem[pc++];
 
             default: // literal values
-                operand -= 0x21;
-                return operand;
+                ubyte tmp = cast(ubyte) operand;
+                tmp -= 0x21;
+                operand = tmp;
+                return &operand;
         }
     }
 }
@@ -150,10 +152,14 @@ pure unittest
     cpu.regs.x = 123;
     mem[123] = 456;
 
-    assert(cpu.decodeOperand(0x03, false) == 123, "1");
-    assert(cpu.decodeOperand(0x0b, false) == 456, "2");
+    ushort o1 = 0x03;
+    ushort o2 = 0x0b;
+    assert(*cpu.decodeOperand(o1, false) == 123, "1");
+    assert(*cpu.decodeOperand(o2, false) == 456, "2");
 
     // literal values:
-    assert(cpu.decodeOperand(0x20, true) == cast(ubyte) -1);
-    assert(cpu.decodeOperand(0x3f, true) == 30);
+    ushort l1 = 0x20;
+    ushort l2 = 0x3f;
+    assert(*cpu.decodeOperand(l1, true) == cast(ubyte) -1);
+    assert(*cpu.decodeOperand(l2, true) == 30);
 }
