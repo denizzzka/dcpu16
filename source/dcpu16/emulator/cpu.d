@@ -75,7 +75,7 @@ struct CPU
         }
     }
 
-    private ushort* decodeRegisterOfOperand(in uint operand) pure // TODO: arg should be ubyte type
+    private ushort* decodeRegisterOfOperand(in ushort operand) pure
     {
         with(regs)
         switch(operand)
