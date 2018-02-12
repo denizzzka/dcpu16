@@ -64,10 +64,15 @@ struct CPU
 
     ushort decodeOperand(ubyte operand) const pure
     {
+        import std.exception: enforce;
+
         // Operands codes boundaries:
         enum directRegister = 0x07;
         enum indirectRegister = 0x0f;
         enum IndirectNextWordPlusRegister = 0x17;
+        enum literalValue = 0x3f;
+
+        enforce(operand <= literalValue, "Unknown operand");
 
         if(operand <= directRegister)
         {
@@ -83,8 +88,39 @@ struct CPU
             size_t address = nextValue + decodeRegisterOperand(operand - indirectRegister);
             return mem[address];
         }
-        else
-            assert(false, "Unknown operand");
+
+        assert(operand != 0x18, "Unimplemented");
+        assert(operand != 0x19, "Unimplemented");
+        assert(operand != 0x1a, "Unimplemented");
+
+        with(regs)
+        switch(operand)
+        {
+            case 0x1b:
+                return sp;
+
+            case 0x1c:
+                return pc;
+
+            case 0x1d:
+                return ex;
+
+            case 0x1e: // [next word]
+                return mem[ mem[pc+1] ];
+
+            case 0x1f: // next word (literal)
+                return mem[pc+1];
+
+            default:
+                break;
+        }
+
+        assert(operand > 0x1f);
+
+        // literal values:
+        operand -= 0x21;
+
+        return operand;
     }
 }
 
@@ -97,6 +133,10 @@ pure unittest
 
     assert(cpu.decodeOperand(0x03) == 123, "1");
     assert(cpu.decodeOperand(0x0a) == 456, "2");
+
+    // literal values:
+    assert(cpu.decodeOperand(0x20) == cast(ubyte) -1);
+    assert(cpu.decodeOperand(0x3f) == 30);
 }
 
 struct Instruction
