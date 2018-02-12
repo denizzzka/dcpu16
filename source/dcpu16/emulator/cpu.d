@@ -72,7 +72,7 @@ pure struct CPU
 
     private void executeInstruction(ref Instruction ins) pure
     {
-        ushort r;
+        int r;
 
         if(!ins.spec_zeroes)
         {
@@ -81,28 +81,68 @@ pure struct CPU
             ushort b = *decodeOperand(ins.b, false);
 
             with(Opcodes)
+            with(regs.ex)
             switch(ins.opcode)
             {
                 case SET: r = a; break;
-
-                case ADD:
-                    r += b;
-                    r += a;
-                    regs.ex.cf = b + a > ushort.max ? 1 : 0;
+                case ADD: r = b + a; ex = r >>> 16; break;
+                case SUB: r = b - a; ex = a > b ? 0xffff : 0; break;
+                case MUL: r = b * a; ex = r >>> 16; break;
+                case MLI: r = cast(short) a * cast(short) b; ex = cast(ushort) r >> 16; break;
+                case DIV:
+                    if (a==0)
+                    {
+                        r = 0;
+                        ex = 0;
+                    }
+                    else
+                    {
+                        r = b / a;
+                        ex = ((b << 16) / a) & 0xFFFF;
+                    }
                     break;
+                case DVI:
+                    if (a==0)
+                    {
+                        r = 0;
+                        ex = 0;
+                    }
+                    else
+                    {
+                        auto _a = cast(short) a;
+                        auto _b = cast(short) b;
 
-                case SUB:
-                    r -= b;
-                    r -= a;
-                    regs.ex.cf = b - a > ushort.max ? 1 : 0;
+                        r = cast(short) _b / cast(short) _a;
+                        ex = ((_b << 16) / _a) & 0xFFFF;
+                    }
                     break;
+                case MOD: r = a == 0 ? 0 : b % a; break;
+                case MDI: r = a == 0 ? 0 : cast(short)b % cast(short)a; break;
+                case AND: r = a & b; break;
+                case BOR: r = a | b; break;
+                case XOR: r = a ^ b; break;
+                case SHR: r = b >>> a; ex = ((b<<16)>>>a) & 0xffff; break;
+                case ASR: r = cast(short)b >> a; ex = ((b<<16)>>>a) & 0xffff; break;
+                case SHL: r = b << a; ex = ((b<<a)>>>16) & 0xffff; break;
+                //~ case IFB: if ((b & a)==0) dcpu.skipIfs(); return;
+                //~ case IFC: if ((b & a)!=0) dcpu.skipIfs(); return;
+                //~ case IFE: if (b != a) dcpu.skipIfs(); return;
+                //~ case IFN: if (b == a) dcpu.skipIfs(); return;
+                //~ case IFG: if (b <= a) dcpu.skipIfs(); return;
+                //~ case IFA: if (cast(short)b <= cast(short)a) dcpu.skipIfs(); return;
+                //~ case IFL: if (b >= a) dcpu.skipIfs(); return;
+                //~ case IFU: if (cast(short)b >= cast(short)a) dcpu.skipIfs(); return;
+                case ADX: r = b + a + ex; ex = (r >>> 16) ? 1 : 0; break;
+                case SBX: r = b - a + ex; auto under = cast(ushort) r >> 16; ex = under ? 0xffff : 0; break;
+                //~ case STI: ba.set(a); i = cast(ushort)(i + 1); j = cast(ushort)(j + 1); return;
+                //~ case STD: ba.set(a); i = cast(ushort)(i - 1); j = cast(ushort)(j - 1); return;
 
                 default:
                     enforce("Opcode isn't defined");
             }
 
             if(a < 0x1f) // operand is not literal value
-                *a_ptr = r;
+                *a_ptr = cast(ushort) r;
         }
         else
             assert("Unimplemented");
