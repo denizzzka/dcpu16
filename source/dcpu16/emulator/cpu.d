@@ -38,9 +38,41 @@ struct CPU
         regs.reset;
     }
 
-    Instruction currInstr() const
+    void step()
     {
-        return Instruction(&this, mem[regs.pc]);
+        auto curr = getCurrInstr();
+    }
+
+    private Instruction getCurrInstr()
+    {
+        return Instruction(mem[regs.pc]);
+    }
+
+    struct Instruction
+    {
+        import std.bitmanip: bitfields;
+
+        union
+        {
+            ushort word0;
+
+            mixin(bitfields!(
+                ubyte, "opcode",    5,
+                ubyte, "b",         5,
+                ubyte, "a",         6,
+            ));
+
+            mixin(bitfields!(
+                ubyte, "spec_zeroes",   5,
+                ubyte, "spec_opcode",   5,
+                ubyte, "spec_a",        6,
+            ));
+        }
+
+        private this(ushort w0) pure
+        {
+            word0 = w0;
+        }
     }
 
     private ushort decodeRegisterOfOperand(uint operand) const pure // TODO: arg should be ubyte type
@@ -124,45 +156,4 @@ pure unittest
     // literal values:
     assert(cpu.decodeOperand(0x20, true) == cast(ubyte) -1);
     assert(cpu.decodeOperand(0x3f, true) == 30);
-}
-
-struct Instruction
-{
-    import std.bitmanip: bitfields;
-
-    union
-    {
-        ushort word0;
-
-        mixin(bitfields!(
-            ubyte, "opcode",    5,
-            ubyte, "b",         5,
-            ubyte, "a",         6,
-        ));
-
-        mixin(bitfields!(
-            ubyte, "spec_zeroes",   5,
-            ubyte, "spec_opcode",   5,
-            ubyte, "spec_a",        6,
-        ));
-    }
-
-    ushort word1;
-    ushort word2;
-
-    this(in CPU* mem, ushort w0) pure
-    {
-        word0 = w0;
-    }
-}
-
-pure unittest
-{
-    Memory mem = new ushort[0x10000];
-    auto cpu = CPU(mem);
-    auto i = Instruction(&cpu, 0b11111);
-
-    assert(i.opcode == 0b11111);
-    assert(i.a == 0);
-    assert(i.b == 0);
 }
