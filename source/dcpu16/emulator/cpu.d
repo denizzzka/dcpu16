@@ -43,7 +43,7 @@ struct CPU
         return Instruction(&this, mem[regs.pc]);
     }
 
-    private ushort decodeRegisterOperand(uint operand) const pure // TODO: arg should be ubyte type
+    private ushort decodeRegisterOfOperand(uint operand) const pure // TODO: arg should be ubyte type
     {
         with(regs)
         switch(operand)
@@ -62,7 +62,7 @@ struct CPU
         }
     }
 
-    ushort decodeOperand(ubyte operand) const pure
+    private ushort decodeOperand(ubyte operand, bool isA) const pure
     {
         import std.exception: enforce;
 
@@ -76,16 +76,16 @@ struct CPU
 
         if(operand <= directRegister)
         {
-            return decodeRegisterOperand(operand);
+            return decodeRegisterOfOperand(operand);
         }
         else if(operand <= indirectRegister)
         {
-            return mem[decodeRegisterOperand(operand - directRegister)];
+            return mem[decodeRegisterOfOperand(operand - directRegister)];
         }
         else if(operand <= IndirectNextWordPlusRegister)
         {
             ushort nextValue = mem[regs.pc+1];
-            size_t address = nextValue + decodeRegisterOperand(operand - indirectRegister);
+            size_t address = nextValue + decodeRegisterOfOperand(operand - indirectRegister);
             return mem[address];
         }
 
@@ -131,12 +131,12 @@ pure unittest
     cpu.regs.x = 123;
     mem[123] = 456;
 
-    assert(cpu.decodeOperand(0x03) == 123, "1");
-    assert(cpu.decodeOperand(0x0a) == 456, "2");
+    assert(cpu.decodeOperand(0x03, false) == 123, "1");
+    assert(cpu.decodeOperand(0x0a, false) == 456, "2");
 
     // literal values:
-    assert(cpu.decodeOperand(0x20) == cast(ubyte) -1);
-    assert(cpu.decodeOperand(0x3f) == 30);
+    assert(cpu.decodeOperand(0x20, true) == cast(ubyte) -1);
+    assert(cpu.decodeOperand(0x3f, true) == 30);
 }
 
 struct Instruction
