@@ -2,18 +2,26 @@ module dcpu16.emulator.cpu;
 
 struct Registers
 {
-    ushort a;
-    ushort b;
-    ushort c;
-    ushort x;
-    ushort y;
-    ushort z;
-    ushort i;
-    ushort j;
-    ushort sp; /// stack pointer
-    ushort pc; /// program counter
-    ushort ex; /// extra/excess
-    ushort ia; /// interrupt address
+    union
+    {
+        ushort[8] asArr;
+
+        struct
+        {
+            ushort a;
+            ushort b;
+            ushort c;
+            ushort x;
+            ushort y;
+            ushort z;
+            ushort i;
+            ushort j;
+            ushort sp; /// stack pointer
+            ushort pc; /// program counter
+            ushort ex; /// extra/excess
+            ushort ia; /// interrupt address
+        }
+    }
 
     void reset() pure
     {
@@ -74,21 +82,9 @@ pure struct CPU
 
     private ushort* decodeRegisterOfOperand(in ushort operand) pure
     {
-        with(regs)
-        switch(operand)
-        {
-            case 0x00: return &a;
-            case 0x01: return &b;
-            case 0x02: return &c;
-            case 0x03: return &x;
-            case 0x04: return &y;
-            case 0x05: return &z;
-            case 0x06: return &i;
-            case 0x07: return &j;
+        assert(operand <= 7);
 
-            default:
-                assert(false);
-        }
+        return &regs.asArr[operand];
     }
 
     private ushort* decodeOperand(ref ushort operand, bool isA) pure
