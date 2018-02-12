@@ -23,8 +23,10 @@ struct Registers
 
 import dcpu16.emulator: Memory;
 
-struct CPU
+pure struct CPU
 {
+    import std.exception: enforce;
+
     Memory mem;
     Registers regs;
 
@@ -40,39 +42,34 @@ struct CPU
 
     void step()
     {
-        auto curr = getCurrInstr();
+        Instruction curr = Instruction(mem[regs.pc]);
     }
 
-    private Instruction getCurrInstr()
+    private void decodeOpcode(ref Instruction ins) pure
     {
-        return Instruction(mem[regs.pc]);
-    }
-
-    struct Instruction
-    {
-        import std.bitmanip: bitfields;
-
-        union
+        if(!ins.spec_zeroes)
         {
-            ushort word0;
+            ushort* a = decodeOperand(ins.a, true);
+            ushort* b = decodeOperand(ins.b, false);
 
-            mixin(bitfields!(
-                ubyte, "opcode",    5,
-                ubyte, "b",         5,
-                ubyte, "a",         6,
-            ));
+            switch(ins.opcode)
+            {
+                case 0x01: // SET
+                    *b = *a;
+                    break;
 
-            mixin(bitfields!(
-                ubyte, "spec_zeroes",   5,
-                ubyte, "spec_opcode",   5,
-                ubyte, "spec_a",        6,
-            ));
+                case 0x02: // ADD
+                    *b += *a;
+                    regs.ex = *b + *a > ushort.max ?
+                        regs.ex = 1 : 0;
+                    break;
+
+                default:
+                    enforce("Opcode isn't defined");
+            }
         }
-
-        private this(ushort w0) pure
-        {
-            word0 = w0;
-        }
+        else
+            assert("Unimplemented");
     }
 
     private ushort* decodeRegisterOfOperand(in ushort operand) pure
@@ -96,8 +93,6 @@ struct CPU
 
     private ushort* decodeOperand(ref ushort operand, bool isA) pure
     {
-        import std.exception: enforce;
-
         enforce(operand <= 0x3f, "Unknown operand");
 
         with(regs)
@@ -142,6 +137,38 @@ struct CPU
                 operand = tmp;
                 return &operand;
         }
+    }
+}
+
+struct Instruction
+{
+    import std.bitmanip: bitfields;
+
+    ushort a;
+    ushort b;
+    ubyte opcode;
+
+    alias spec_zeroes = opcode;
+    alias spec_opcode = b;
+
+    private this(ushort w0) pure
+    {
+        union U
+        {
+            ushort word;
+
+            mixin(bitfields!(
+                ubyte, "opcode",    5,
+                ubyte, "b",         5,
+                ubyte, "a",         6,
+            ));
+        }
+
+        U u = U(w0);
+
+        a = u.a;
+        b = u.b;
+        opcode = u.opcode;
     }
 }
 
