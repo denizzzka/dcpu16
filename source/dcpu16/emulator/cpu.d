@@ -33,9 +33,9 @@ struct CPU
         _mem = m;
     }
 
-    ref Memory mem() inout
+    Memory mem() inout
     {
-        return this.mem;
+        return *_mem;
     }
 
     void reset()
@@ -48,7 +48,7 @@ struct CPU
         return Instruction(&this, mem[regs.pc]);
     }
 
-    private ushort decodeRegisterOperand(uint operand) const
+    private ushort decodeRegisterOperand(uint operand) const // TODO: arg should be ubyte type
     {
         with(regs)
         switch(operand)
@@ -69,18 +69,27 @@ struct CPU
 
     ushort decodeOperand(ubyte operand) const
     {
-        if(operand <= 0x07) // Direct Register
+        // Operands codes boundaries:
+        enum directRegister = 0x07;
+        enum indirectRegister = 0x0f;
+        enum IndirectNextWordPlusRegister = 0x17;
+
+        if(operand <= directRegister)
+        {
             return decodeRegisterOperand(operand);
-        else if(operand <= 0x0f) // Indirect Register
-            return mem[decodeRegisterOperand(operand - 0x0f)];
-        else if(operand <= 0x17) // Indirect Next Word plus Register
+        }
+        else if(operand <= indirectRegister)
+        {
+            return mem[decodeRegisterOperand(operand - directRegister)];
+        }
+        else if(operand <= IndirectNextWordPlusRegister)
         {
             ushort nextValue = mem[regs.pc+1];
-            size_t address = nextValue + decodeRegisterOperand(operand - 0x17);
+            size_t address = nextValue + decodeRegisterOperand(operand - indirectRegister);
             return mem[address];
         }
         else
-            assert(false);
+            assert(false, "Unknown operand");
     }
 }
 
@@ -89,8 +98,10 @@ unittest
     Memory mem;
     auto cpu = CPU(&mem);
     cpu.regs.x = 123;
+    mem[123] = 456;
 
-    assert(cpu.decodeRegisterOperand(3) == 123);
+    assert(cpu.decodeOperand(0x03) == 123, "1");
+    assert(cpu.decodeOperand(0x0a) == 456, "2");
 }
 
 struct Instruction
