@@ -66,32 +66,20 @@ struct CPU
     {
         import std.exception: enforce;
 
-        // Operands codes boundaries:
-        enum directRegister = 0x07;
-        enum indirectRegister = 0x0f;
-        enum IndirectNextWordPlusRegister = 0x17;
-        enum literalValue = 0x3f;
-
-        enforce(operand <= literalValue, "Unknown operand");
-
-        if(operand <= directRegister)
-        {
-            return decodeRegisterOfOperand(operand);
-        }
-        else if(operand <= indirectRegister)
-        {
-            return mem[decodeRegisterOfOperand(operand - directRegister)];
-        }
-        else if(operand <= IndirectNextWordPlusRegister)
-        {
-            ushort nextValue = mem[regs.pc+1];
-            size_t address = nextValue + decodeRegisterOfOperand(operand - indirectRegister);
-            return mem[address];
-        }
+        enforce(operand <= 0x3f, "Unknown operand");
 
         with(regs)
         switch(operand)
         {
+            case 0x00: .. case 0x07: // register
+                return decodeRegisterOfOperand(operand);
+
+            case 0x08: .. case 0x0f: // [register]
+                return mem[ decodeRegisterOfOperand(operand & 7) ];
+
+            case 0x10: .. case 0x17: // [register + next word]
+                return mem[ decodeRegisterOfOperand(operand & 7) + mem[regs.pc++] ];
+
             case 0x18: // PUSH / POP
                 return isA ? mem[sp++] : mem[--sp];
 
@@ -111,21 +99,15 @@ struct CPU
                 return ex;
 
             case 0x1e: // [next word]
-                return mem[ mem[pc+1] ];
+                return mem[ mem[pc++] ];
 
             case 0x1f: // next word (literal)
-                return mem[pc+1];
+                return mem[pc++];
 
-            default:
-                break;
+            default: // literal values
+                operand -= 0x21;
+                return operand;
         }
-
-        assert(operand > 0x1f);
-
-        // literal values:
-        operand -= 0x21;
-
-        return operand;
     }
 }
 
@@ -137,7 +119,7 @@ pure unittest
     mem[123] = 456;
 
     assert(cpu.decodeOperand(0x03, false) == 123, "1");
-    assert(cpu.decodeOperand(0x0a, false) == 456, "2");
+    assert(cpu.decodeOperand(0x0b, false) == 456, "2");
 
     // literal values:
     assert(cpu.decodeOperand(0x20, true) == cast(ubyte) -1);
