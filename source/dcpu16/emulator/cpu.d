@@ -203,9 +203,7 @@ pure struct CPU
 
             default: // literal values
                 enforce(isA, "Wrong B operand");
-                ubyte tmp = cast(ubyte) operand;
-                tmp -= 0x21;
-                operand = tmp;
+                operand -= 0x21;
                 return &operand;
         }
     }
@@ -312,6 +310,6 @@ pure unittest
     // literal values:
     ushort l1 = 0x20;
     ushort l2 = 0x3f;
-    assert(*cpu.decodeOperand(l1, true) == cast(ubyte) -1);
+    assert(*cpu.decodeOperand(l1, true) == cast(ushort) -1);
     assert(*cpu.decodeOperand(l2, true) == 30);
 }

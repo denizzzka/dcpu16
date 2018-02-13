@@ -131,6 +131,6 @@ unittest
         writeln(comp.machineState); comp.cpu.step; assert(c == 999, c.to!string);
         writeln(comp.machineState); comp.cpu.step; assert(c == 900, c.to!string);
         writeln(comp.machineState); comp.cpu.step; assert(c == 1800, c.to!string);
-        //~ writeln(comp.machineState); comp.cpu.step; writeln(comp.machineState); assert(c == 1800 && A == 0xFFFF);
+        writeln(comp.machineState); comp.cpu.step; writeln(comp.machineState); assert(c == 1800 && A == 0xFFFF);
     }
 }
