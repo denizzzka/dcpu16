@@ -1,6 +1,7 @@
 module dcpu16.emulator;
 
 import std.string: format;
+import std.exception: enforce;
 
 alias Memory = ushort[];
 
@@ -17,6 +18,8 @@ class Computer
     {
         mem.length = 0x10000;
         cpu = CPU(this);
+
+        enforce(devs.length <= short.max);
         devices = devs;
     }
 
@@ -38,7 +41,6 @@ class Computer
 
     void load(ubyte[] from) pure
     {
-        import std.exception: enforce;
         import std.bitmanip;
 
         enforce(from.length <= Memory.sizeof);

@@ -180,7 +180,7 @@ pure struct CPU
             case IAS: ia = a; return;
             case RFI: assert(false, "Unimplemented");
             case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
-            case HWN: a = 0; return; //TODO: number of connected hardware devices
+            case HWN: a = cast(ushort) computer.devices.length; return;
             case HWQ: assert(false, "Unimplemented");
             case HWI: assert(false, "Unimplemented");
 
