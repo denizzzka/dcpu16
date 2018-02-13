@@ -47,6 +47,7 @@ class LEM1802 : IDevice
             case MEM_DUMP_FONT:
                 dump(mem, font[0 .. defaultFont.length], B);
                 return;
+
             case MEM_DUMP_PALETTE:
                 dump(mem, palette[0 .. defaultPalette.length], B);
                 return;
