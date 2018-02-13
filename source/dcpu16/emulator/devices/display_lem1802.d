@@ -9,12 +9,17 @@ class LEM1802 : IDevice
     uint manufacturer() const pure { return 0x1c6c8b36; };
     ushort ver() const pure { return 0x1802 ; };
 
-    private ushort* screen;
+    private const(ushort)* screen;
     private const(ushort)* font = defaultFont.ptr;
     private const(ushort)* palette = defaultPalette.ptr;
     private ubyte borderColor;
 
     bool isDisconnected() const { return screen is null; }
+
+    this(Computer comp)
+    {
+        screen = &comp.mem[0x8000];
+    }
 
     void handleHardwareInterrupt(Computer comp)
     {
