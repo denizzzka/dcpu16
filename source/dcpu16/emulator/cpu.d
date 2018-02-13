@@ -80,9 +80,9 @@ pure struct CPU
         {
             enforce(ins.opcode <= Opcode.STD, "Wrong opcode");
 
-            ushort* a_ptr = decodeOperand(ins.a, true);
-            ushort a = *a_ptr;
-            ushort b = *decodeOperand(ins.b, false);
+            ushort a = *decodeOperand(ins.a, true);
+            ushort* b_ptr = decodeOperand(ins.b, false);
+            ushort b = *b_ptr;
 
             with(Opcode)
             with(regs)
@@ -150,7 +150,7 @@ pure struct CPU
             }
 
             if(a < 0x1f) // operand is not literal value
-                *a_ptr = cast(ushort) r;
+                *b_ptr = cast(ushort) r;
         }
         else
             assert(false, "Unimplemented");
