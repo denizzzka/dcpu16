@@ -10,7 +10,7 @@ class LEM1802 : IDevice
     ushort ver() const pure { return 0x1802 ; };
 
     private ushort* screen;
-    private const(ushort)* font = &defaultFont[0];
+    private const(ushort)* font = defaultFont.ptr;
     private ushort* palette;
     private ubyte borderColor;
 
@@ -25,7 +25,7 @@ class LEM1802 : IDevice
                 return;
 
             case 1:
-                font = &mem[B];
+                font = (B == 0) ? defaultFont.ptr : &mem[B];
                 return;
 
             case 2:
