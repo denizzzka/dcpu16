@@ -168,10 +168,10 @@ pure struct CPU
         with(regs)
         switch(ins.spec_opcode)
         {
-            case JSR: push(pc); pc = a; break;
+            case JSR: push(pc); pc = a; return;
             case INT: assert(false, "Unimplemented");
             case IAG: r = ia; break;
-            case IAS: ia = a; break;
+            case IAS: ia = a; return;
             case RFI: assert(false, "Unimplemented");
             case IAQ: assert(false, "Unimplemented");
             case HWN: assert(false, "Unimplemented");
@@ -182,6 +182,9 @@ pure struct CPU
             default:
                 enforce("Wrong opcode");
         }
+
+        if(ins.a < 0x1f) // operand is not literal value
+            *a_ptr = cast(ushort) r;
     }
 
     private void push(ushort val) pure
