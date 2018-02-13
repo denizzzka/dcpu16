@@ -14,6 +14,8 @@ class LEM1802 : IDevice
     private ushort* palette;
     private ubyte borderColor;
 
+    bool isDisconnected() const { return screen is null; }
+
     void handleHardwareInterrupt(Computer comp)
     {
         with(comp)
@@ -21,7 +23,7 @@ class LEM1802 : IDevice
         switch(A)
         {
             case 0:
-                screen = &mem[B];
+                screen = (B == 0) ? null : &mem[B];
                 return;
 
             case 1:
