@@ -23,30 +23,57 @@ class LEM1802 : IDevice
 
     void handleHardwareInterrupt(Computer comp)
     {
+        with(InterruptActions)
         with(comp)
         with(cpu.regs)
         switch(A)
         {
-            case 0:
+            case MEM_MAP_SCREEN:
                 screen = (B == 0) ? null : &mem[B];
                 return;
 
-            case 1:
+            case MEM_MAP_FONT:
                 font = (B == 0) ? defaultFont.ptr : &mem[B];
                 return;
 
-            case 2:
+            case MEM_MAP_PALETTE:
                 palette = (B == 0) ? defaultPalette.ptr : &mem[B];
                 return;
 
-            case 3:
+            case SET_BORDER_COLOR:
                 borderColor = B & 0xF;
+                return;
+
+            case MEM_DUMP_FONT:
+                dump(mem, font[0 .. defaultFont.length], B);
+                return;
+            case MEM_DUMP_PALETTE:
+                dump(mem, palette[0 .. defaultPalette.length], B);
                 return;
 
             default:
                 break;
         }
     }
+
+    private void dump(Memory mem, const(ushort)[] from, ushort to) pure
+    {
+        // cutt to fit into memory, if necessary
+        if(to + from.length > mem.length)
+            from.length = mem.length - to;
+
+        mem[to .. to + from.length] = from[];
+    }
+}
+
+enum InterruptActions : ushort
+{
+    MEM_MAP_SCREEN,
+    MEM_MAP_FONT,
+    MEM_MAP_PALETTE,
+    SET_BORDER_COLOR,
+    MEM_DUMP_FONT,
+    MEM_DUMP_PALETTE,
 }
 
 immutable ushort[256] defaultFont =
