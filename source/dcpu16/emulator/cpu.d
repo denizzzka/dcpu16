@@ -82,7 +82,7 @@ pure struct CPU
 
             with(Opcodes)
             with(regs)
-            switch(ins.opcode) // TODO: replace it with "wire connection matrix"
+            final switch(ins.opcode) // TODO: replace it with "wire connection matrix"
             {
                 case SET: r = a; break;
                 case ADD: r = b + a; ex = r >>> 16; break;
@@ -137,8 +137,12 @@ pure struct CPU
                 case STI: r = b; i++; j++; break;
                 case STD: r = b; i--; j--; break;
 
-                default:
-                    enforce("Opcode isn't defined");
+                case unused_0x00:
+                case unused_0x18:
+                case unused_0x19:
+                case unused_0x1c:
+                case unused_0x1d:
+                    assert(false);
             }
 
             if(a < 0x1f) // operand is not literal value
@@ -205,9 +209,10 @@ pure struct CPU
     }
 }
 
-enum Opcodes
+enum Opcodes : ubyte
 {
-    SET = 0x01, /// sets b to a
+    unused_0x00,
+    SET, /// sets b to a
     ADD, /// sets b to b+a, sets EX to 0x0001 if there's an overflow, 0x0 otherwise
     SUB, /// sets EX to 0xffff if there's an underflow, 0x0 otherwise
     MUL, /// sets EX to ((b*a)>>16)&0xffff (treats b, a as unsigned)
@@ -230,9 +235,13 @@ enum Opcodes
     IFA, /// performs next instruction only if b>a (signed)
     IFL, /// performs next instruction only if b<a
     IFU, /// performs next instruction only if b<a (signed)
-    ADX = 0x1a, /// sets b to b+a+EX, sets EX to 0x0001 if there is an overflow, 0x0 otherwise
+    unused_0x18,
+    unused_0x19,
+    ADX, /// sets b to b+a+EX, sets EX to 0x0001 if there is an overflow, 0x0 otherwise
     SBX, /// sets b to b-a+EX, sets EX to 0xFFFF if there is an underflow, 0x0 otherwise
-    STI = 0x1e, /// sets b to a, then increases I and J by 1
+    unused_0x1c,
+    unused_0x1d,
+    STI, /// sets b to a, then increases I and J by 1
     STD, /// sets b to a, then decreases I and J by 1
 }
 
