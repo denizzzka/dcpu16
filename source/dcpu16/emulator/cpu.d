@@ -58,6 +58,7 @@ pure struct CPU
     void reset() pure
     {
         regs.reset;
+        intQueue.reset;
     }
 
     void step()
@@ -171,11 +172,11 @@ pure struct CPU
         switch(ins.spec_opcode)
         {
             case JSR: push(pc); pc = a; return;
-            case INT: isBurning = intQueue.triggerInterruptOrBurnOut(a); return;
+            case INT: isBurning = intQueue.addInterruptOrBurnOut(a); return;
             case IAG: r = ia; break;
             case IAS: ia = a; return;
             case RFI: assert(false, "Unimplemented");
-            case IAQ: assert(false, "Unimplemented");
+            case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
             case HWN: assert(false, "Unimplemented");
             case HWQ: assert(false, "Unimplemented");
             case HWI: assert(false, "Unimplemented");
@@ -264,16 +265,21 @@ pure struct CPU
 private struct InteruptQueue
 {
     private ushort[] queue; //TODO: It should be replaced by a more faster mechanism
+    bool isTriggeringEnabled = true;
 
-    bool triggerInterruptOrBurnOut(ushort msg) pure
+    bool addInterruptOrBurnOut(ushort msg) pure
     {
         if(queue.length > 256)
             return true;
-        else
-        {
-            queue ~= msg;
-            return false;
-        }
+
+        queue ~= msg;
+
+        return false;
+    }
+
+    void reset() pure
+    {
+        this = InteruptQueue();
     }
 }
 
