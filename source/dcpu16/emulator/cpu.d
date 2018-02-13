@@ -47,6 +47,8 @@ pure struct CPU
 
     Memory mem;
     Registers regs;
+    InteruptQueue intQueue;
+    bool isBurning;
 
     this(ref Memory m) pure
     {
@@ -169,7 +171,7 @@ pure struct CPU
         switch(ins.spec_opcode)
         {
             case JSR: push(pc); pc = a; return;
-            case INT: assert(false, "Unimplemented");
+            case INT: isBurning = intQueue.triggerInterruptOrBurnOut(a); return;
             case IAG: r = ia; break;
             case IAS: ia = a; return;
             case RFI: assert(false, "Unimplemented");
@@ -256,6 +258,22 @@ pure struct CPU
                 ret ~= format("%04x\n", mem[i]);
 
         return ret;
+    }
+}
+
+private struct InteruptQueue
+{
+    private ushort[] queue; //TODO: It should be replaced by a more faster mechanism
+
+    bool triggerInterruptOrBurnOut(ushort msg) pure
+    {
+        if(queue.length > 256)
+            return true;
+        else
+        {
+            queue ~= msg;
+            return false;
+        }
     }
 }
 
