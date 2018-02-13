@@ -72,86 +72,122 @@ pure struct CPU
 
     private void executeInstruction(ref Instruction ins) pure
     {
+        if(ins.opcode != Opcode.special)
+            performBasicInstruction(ins);
+        else
+            performSpecialInstruction(ins);
+    }
+
+    private void performBasicInstruction(ref Instruction ins) pure
+    {
+        enforce(ins.opcode <= Opcode.STD, "Wrong opcode");
+
         int r;
 
-        if(ins.opcode != Opcode.special)
+        ushort a = *decodeOperand(ins.a, true);
+        ushort* b_ptr = decodeOperand(ins.b, false);
+        ushort b = *b_ptr;
+
+        with(Opcode)
+        with(regs)
+        final switch(ins.opcode) // TODO: replace it with "wire connection matrix"
         {
-            enforce(ins.opcode <= Opcode.STD, "Wrong opcode");
+            case special: assert(false);
+            case SET: r = a; break;
+            case ADD: r = b + a; ex = r >>> 16; break;
+            case SUB: r = b - a; ex = a > b ? 0xffff : 0; break;
+            case MUL: r = b * a; ex = r >>> 16; break;
+            case MLI: r = cast(short) a * cast(short) b; ex = cast(ushort) r >> 16; break;
+            case DIV:
+                if (a==0)
+                {
+                    r = 0;
+                    ex = 0;
+                }
+                else
+                {
+                    r = b / a;
+                    ex = ((b << 16) / a) & 0xFFFF;
+                }
+                break;
+            case DVI:
+                if (a==0)
+                {
+                    r = 0;
+                    ex = 0;
+                }
+                else
+                {
+                    auto _a = cast(short) a;
+                    auto _b = cast(short) b;
 
-            ushort a = *decodeOperand(ins.a, true);
-            ushort* b_ptr = decodeOperand(ins.b, false);
-            ushort b = *b_ptr;
+                    r = cast(short) _b / cast(short) _a;
+                    ex = ((_b << 16) / _a) & 0xFFFF;
+                }
+                break;
+            case MOD: r = a == 0 ? 0 : b % a; break;
+            case MDI: r = a == 0 ? 0 : cast(short)b % cast(short)a; break;
+            case AND: r = a & b; break;
+            case BOR: r = a | b; break;
+            case XOR: r = a ^ b; break;
+            case SHR: r = b >>> a; ex = ((b<<16)>>>a) & 0xffff; break;
+            case ASR: r = cast(short)b >> a; ex = ((b<<16)>>>a) & 0xffff; break;
+            case SHL: r = b << a; ex = ((b<<a)>>>16) & 0xffff; break;
+            case IFB: if(!((b & a) != 0)) pc++; return;
+            case IFC: if(!((b & a) == 0)) pc++; return;
+            case IFE: if(!(b == a)) pc++; return;
+            case IFN: if(!(b != a)) pc++; return;
+            case IFG: if(!(b > a)) pc++; return;
+            case IFA: if(!(cast(short)b > cast(short)a)) pc++; return;
+            case IFL: if(!(b < a)) pc++; return;
+            case IFU: if(!(cast(short)b < cast(short)a)) pc++; return;
+            case ADX: r = b + a + ex; ex = (r >>> 16) ? 1 : 0; break;
+            case SBX: r = b - a + ex; auto under = cast(ushort) r >> 16; ex = under ? 0xffff : 0; break;
+            case STI: r = b; i++; j++; break;
+            case STD: r = b; i--; j--; break;
 
-            with(Opcode)
-            with(regs)
-            final switch(ins.opcode) // TODO: replace it with "wire connection matrix"
-            {
-                case special: assert(false);
-                case SET: r = a; break;
-                case ADD: r = b + a; ex = r >>> 16; break;
-                case SUB: r = b - a; ex = a > b ? 0xffff : 0; break;
-                case MUL: r = b * a; ex = r >>> 16; break;
-                case MLI: r = cast(short) a * cast(short) b; ex = cast(ushort) r >> 16; break;
-                case DIV:
-                    if (a==0)
-                    {
-                        r = 0;
-                        ex = 0;
-                    }
-                    else
-                    {
-                        r = b / a;
-                        ex = ((b << 16) / a) & 0xFFFF;
-                    }
-                    break;
-                case DVI:
-                    if (a==0)
-                    {
-                        r = 0;
-                        ex = 0;
-                    }
-                    else
-                    {
-                        auto _a = cast(short) a;
-                        auto _b = cast(short) b;
-
-                        r = cast(short) _b / cast(short) _a;
-                        ex = ((_b << 16) / _a) & 0xFFFF;
-                    }
-                    break;
-                case MOD: r = a == 0 ? 0 : b % a; break;
-                case MDI: r = a == 0 ? 0 : cast(short)b % cast(short)a; break;
-                case AND: r = a & b; break;
-                case BOR: r = a | b; break;
-                case XOR: r = a ^ b; break;
-                case SHR: r = b >>> a; ex = ((b<<16)>>>a) & 0xffff; break;
-                case ASR: r = cast(short)b >> a; ex = ((b<<16)>>>a) & 0xffff; break;
-                case SHL: r = b << a; ex = ((b<<a)>>>16) & 0xffff; break;
-                case IFB: if(!((b & a) != 0)) pc++; return;
-                case IFC: if(!((b & a) == 0)) pc++; return;
-                case IFE: if(!(b == a)) pc++; return;
-                case IFN: if(!(b != a)) pc++; return;
-                case IFG: if(!(b > a)) pc++; return;
-                case IFA: if(!(cast(short)b > cast(short)a)) pc++; return;
-                case IFL: if(!(b < a)) pc++; return;
-                case IFU: if(!(cast(short)b < cast(short)a)) pc++; return;
-                case ADX: r = b + a + ex; ex = (r >>> 16) ? 1 : 0; break;
-                case SBX: r = b - a + ex; auto under = cast(ushort) r >> 16; ex = under ? 0xffff : 0; break;
-                case STI: r = b; i++; j++; break;
-                case STD: r = b; i--; j--; break;
-
-                case unused_0x18:
-                case unused_0x19:
-                case unused_0x1c:
-                case unused_0x1d:
-                    enforce("Wrong opcode");
-            }
-
-            if(ins.b < 0x1f) // operand is not literal value
-                *b_ptr = cast(ushort) r;
+            case unused_0x18:
+            case unused_0x19:
+            case unused_0x1c:
+            case unused_0x1d:
+                enforce("Wrong opcode");
         }
-        else
-            assert(false, "Unimplemented");
+
+        if(ins.b < 0x1f) // operand is not literal value
+            *b_ptr = cast(ushort) r;
+    }
+
+    private void performSpecialInstruction(ref Instruction ins) pure
+    {
+        ushort* a_ptr = decodeOperand(ins.a, true);
+        ushort a = *a_ptr;
+
+        int r;
+
+        with(SpecialOpcode)
+        with(regs)
+        switch(ins.spec_opcode)
+        {
+            case JSR: push(pc); pc = a; break;
+            case INT: assert(false, "Unimplemented");
+            case IAG: r = ia; break;
+            case IAS: ia = a; break;
+            case RFI: assert(false, "Unimplemented");
+            case IAQ: assert(false, "Unimplemented");
+            case HWN: assert(false, "Unimplemented");
+            case HWQ: assert(false, "Unimplemented");
+            case HWI: assert(false, "Unimplemented");
+
+            case reserved:
+            default:
+                enforce("Wrong opcode");
+        }
+    }
+
+    private void push(ushort val) pure
+    {
+        regs.sp--;
+        mem[regs.sp] = val;
     }
 
     private ushort* decodeRegisterOfOperand(in ushort operand) pure
@@ -256,13 +292,32 @@ enum Opcode : ubyte
     STD, /// sets b to a, then decreases I and J by 1
 }
 
+enum SpecialOpcode : ubyte
+{
+    reserved,
+    JSR, /// pushes the address of the next instruction to the stack, then sets PC to a
+    INT = 0x08, /// triggers a software interrupt with message a
+    IAG, /// sets a to IA
+    IAS, /// sets IA to a
+    RFI, /// disables interrupt queueing, pops A from the stack, then pops PC from the stack
+    IAQ,    /** if a is nonzero, interrupts will be added to the queue instead of triggered.
+                if a is zero, interrupts will be triggered as normal again */
+    HWN = 0x10, /// sets a to number of connected hardware devices
+    HWQ,    /** sets A, B, C, X, Y registers to information about hardware a
+                A+(B<<16) is a 32 bit word identifying the hardware id
+                C is the hardware version
+                X+(Y<<16) is a 32 bit word identifying the manufacturer
+            */
+    HWI, /// sends an interrupt to hardware a
+}
+
 struct Instruction
 {
     ushort a; //TODO: rename to operandA
     union
     {
         ushort b; //TODO: rename to operandB
-        ushort spec_opcode;
+        SpecialOpcode spec_opcode;
     }
     Opcode opcode;
 
