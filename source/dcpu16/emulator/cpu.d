@@ -18,7 +18,7 @@ struct Registers
             ushort j;
             ushort sp; /// stack pointer
             ushort pc; /// program counter
-            EXreg ex; /// extra/excess
+            ushort ex; /// extra/excess
             ushort ia; /// interrupt address
         }
     }
@@ -38,22 +38,6 @@ struct Registers
 }
 
 import std.bitmanip: bitfields;
-
-struct EXreg
-{
-    union
-    {
-        ushort ex;
-
-        mixin(bitfields!(
-            ubyte, "cf",    1,
-            ubyte, "xxxxx",    7,
-        ));
-    }
-
-    alias ex this;
-}
-
 import dcpu16.emulator: Memory;
 
 pure struct CPU
@@ -200,8 +184,8 @@ pure struct CPU
             case 0x1c:
                 return &pc;
 
-            case 0x1d: // EX
-                return &ex.ex;
+            case 0x1d:
+                return &ex;
 
             case 0x1e: // [next word]
                 return &mem[ mem[pc++] ];
