@@ -181,7 +181,15 @@ pure struct CPU
             case RFI: assert(false, "Unimplemented");
             case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
             case HWN: a = cast(ushort) computer.devices.length; return;
-            case HWQ: assert(false, "Unimplemented");
+            case HWQ:
+                enforce(a < computer.devices.length, "Wrong device number");
+                auto dev = computer.devices[a];
+                A = cast(ushort) dev.id;
+                B = dev.id >>> 16;
+                c = dev.ver;
+                x = cast(ushort) dev.manufacturer;
+                y = dev.manufacturer >>> 16;
+                return;
             case HWI: assert(false, "Unimplemented");
 
             case reserved:
