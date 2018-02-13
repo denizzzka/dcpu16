@@ -1,4 +1,0 @@
-; This is a simple program
-         set a,1
- :loop   add a,3
-         set pc, loop
