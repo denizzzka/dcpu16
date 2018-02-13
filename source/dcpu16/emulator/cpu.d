@@ -76,7 +76,7 @@ pure struct CPU
     {
         int r;
 
-        if(!ins.spec_zeroes)
+        if(ins.opcode != Opcode.special)
         {
             enforce(ins.opcode <= Opcode.STD, "Wrong opcode");
 
@@ -88,6 +88,7 @@ pure struct CPU
             with(regs)
             final switch(ins.opcode) // TODO: replace it with "wire connection matrix"
             {
+                case special: assert(false);
                 case SET: r = a; break;
                 case ADD: r = b + a; ex = r >>> 16; break;
                 case SUB: r = b - a; ex = a > b ? 0xffff : 0; break;
@@ -141,12 +142,11 @@ pure struct CPU
                 case STI: r = b; i++; j++; break;
                 case STD: r = b; i--; j--; break;
 
-                case unused_0x00:
                 case unused_0x18:
                 case unused_0x19:
                 case unused_0x1c:
                 case unused_0x1d:
-                    assert(false);
+                    enforce("Wrong opcode");
             }
 
             if(a < 0x1f) // operand is not literal value
@@ -215,7 +215,7 @@ pure struct CPU
 
 enum Opcode : ubyte
 {
-    unused_0x00,
+    special, /// Special opcode
     SET, /// sets b to a
     ADD, /// sets b to b+a, sets EX to 0x0001 if there's an overflow, 0x0 otherwise
     SUB, /// sets EX to 0xffff if there's an underflow, 0x0 otherwise
@@ -252,11 +252,12 @@ enum Opcode : ubyte
 struct Instruction
 {
     ushort a;
-    ushort b;
+    union
+    {
+        ushort b;
+        ushort spec_opcode;
+    }
     Opcode opcode;
-
-    alias spec_zeroes = opcode;
-    alias spec_opcode = b;
 
     private this(ushort w0) pure
     {
