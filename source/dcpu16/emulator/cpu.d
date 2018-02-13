@@ -194,8 +194,10 @@ pure struct CPU
                 x = cast(ushort) dev.manufacturer;
                 y = dev.manufacturer >>> 16;
                 return;
-            case HWI: assert(false, "Unimplemented");
-
+            case HWI:
+                enforce(a < computer.devices.length, "Wrong device number");
+                computer.devices[a].handleInterrupt(computer);
+                return;
             case reserved:
             default:
                 enforce("Wrong opcode");
