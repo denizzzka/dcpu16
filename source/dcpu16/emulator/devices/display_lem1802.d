@@ -18,7 +18,7 @@ class LEM1802 : IDevice
 
     this(Computer comp)
     {
-        screen = &comp.mem[0x8000];
+        screen = &comp.mem[0x8000]; // de facto standard
     }
 
     void handleHardwareInterrupt(Computer comp)
