@@ -157,19 +157,21 @@ unittest
     c.mem[0x8000] = '1';
     c.mem[0x8001] = '2';
     c.mem[0x8002] = '3';
-    c.mem[0x8033] = 'a';
-    c.mem[0x8034] = 'b';
-    c.mem[0x8035] = 'c';
+    c.mem[0x8000 + 32] = 'a';
+    c.mem[0x8000 + 33] = 'b';
+    c.mem[0x8000 + 34] = 'c';
 
     import std.stdio;
 
-    foreach(y; 0 .. 16)
-    {
-        foreach(x; 0 .. 12)
-            write(d.getPixel(x, y) ? '#' : ' ');
+    assert(d.getSymbol(0).character == '1');
+    assert(d.getSymbol(1).character == '2');
+    assert(d.getSymbol(2).character == '3');
+    assert(d.getSymbol(32).character == 'a');
+    assert(d.getSymbol(33).character == 'b');
+    assert(d.getSymbol(34).character == 'c');
 
-        writeln("");
-    }
+    assert(d.getPixel(5, 4) == true);
+    assert(d.getPixel(6, 4) == false);
 }
 
 struct Symbol
