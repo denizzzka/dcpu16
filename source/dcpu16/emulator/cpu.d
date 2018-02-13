@@ -87,9 +87,9 @@ pure struct CPU
 
         int r;
 
-        ushort a = *decodeOperand(ins.a, true);
+        const ushort a = *decodeOperand(ins.a, true);
         ushort* b_ptr = decodeOperand(ins.b, false);
-        ushort b = *b_ptr;
+        const b = *b_ptr;
 
         with(Opcode)
         with(regs)
