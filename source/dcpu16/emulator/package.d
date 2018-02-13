@@ -112,26 +112,38 @@ unittest
             0x7c43, 0x0063, // SUB C, 99       ; C = 900
             0x8c44,         // MUL C, 2        ; C = 1800
             0x8001,         // SET A, 0xFFFF   ; C = 1800, A = 0xFFFF
-            //~ 0x0803,         // SUB A, C        ; C = 1800, A = 0xF8F8
-            //~ 0x0041,         // SET C, A        ; C = -1800, A = 0xF8F8
-            //~ 0x8401,         // SET A, 0        ; C = -1800
-            //~ 0x8c45,         // MLI C, 2        ; C = -3600
-            //~ 0x9047,         // DVI C, 3        ; C = -1200 (0xFB50)
+            0x0803,         // SUB A, C        ; C = 1800, A = 0xF8F8 (FIXME: wtf?! 0xffff - 1800 == 0xf8f7)
+            0x0041,         // SET C, A        ; C = -1800, A = 0xF8F8
+            0x8401,         // SET A, 0        ; C = -1800
+            0x8c45,         // MLI C, 2        ; C = -3600
+            0x9047,         // DVI C, 3        ; C = -1200 (0xFB50)
         ];
 
     comp.cpu.reset;
 
     import std.stdio;
 
-    with(comp.cpu.regs)
+    with(comp.cpu)
+    with(regs)
     {
         import std.conv: to;
 
-        comp.cpu.step; assert(c == 500, c.to!string);
-        comp.cpu.step; assert(c == 999, c.to!string);
-        comp.cpu.step; assert(c == 900, c.to!string);
-        comp.cpu.step; assert(c == 1800, c.to!string);
-        comp.cpu.step; assert(c == 1800 && A == 0xFFFF);
-        //~ writeln(comp.machineState); comp.cpu.step; writeln(comp.machineState); assert(c == 1800 && A == 0xF8F8);
+        step; assert(c == 500, c.to!string);
+        step; assert(c == 999, c.to!string);
+        step; assert(c == 900, c.to!string);
+        step; assert(c == 1800, c.to!string);
+        step; assert(c == 1800 && A == 0xFFFF);
+        step; // SUB A, C
+        assert(c == 1800);
+        assert(A == 0xF8F7); // FIXME: should be 0xf8f8, see SUB comment above
+        A = 0xf8f8;
+        writeln(comp.machineState);
+        step;
+        writeln(comp.machineState);
+        assert(c == cast(ushort) -1800);
+        assert(A == 0xF8F8);
+        step; assert(c == cast(ushort) -1800);
+        step; assert(c == cast(ushort) -3600);
+        step; assert(c == cast(ushort) -1200);
     }
 }
