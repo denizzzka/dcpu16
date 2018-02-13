@@ -85,11 +85,12 @@ class LEM1802 : IDevice
         auto symbolY = y / CHARS_Y_RESOLUTION;
 
         auto s = getSymbol(symbolX + symbolY * CHARS_X_RESOLUTION);
+        auto charPtr = &font[s.character];
 
         auto relativeX = x % CHAR_SIZE_X;
         auto relativeY = y % CHAR_SIZE_Y;
 
-        return true; // getPixelOfSymbol(screen[s.character], relativeX, relativeY);
+        return getPixelOfSymbol(charPtr[0 .. 2], relativeX, relativeY);
     }
 
     static bool getPixelOfSymbol(ushort[2] _bitArray, uint relativeX, uint relativeY) pure
@@ -145,26 +146,28 @@ class LEM1802 : IDevice
     }
 }
 
-//~ unittest
-//~ {
-    //~ auto c = new Computer;
-    //~ auto d = new LEM1802(c);
-    //~ c.attachDevice = d;
+unittest
+{
+    auto c = new Computer;
+    auto d = new LEM1802(c);
+    c.attachDevice = d;
 
-    //~ c.mem[0x8000 + 1] = 0b1111_0101_1_1000110; // 'F'
-
-    //~ import std.stdio;
-
-    //~ foreach(y; 0 .. 8)
-    //~ {
-        //~ foreach(x; 0 .. 4)
-            //~ write(d.getPixel(x, y) ? '#' : ' ');
-
-        //~ writeln("");
-    //~ }
+    char sym = 'a';
+    //~ c.mem[0x8000] = 0b1111_0101_1_1000110;
+    c.mem[0x8000] = 0x46;
 
     //~ assert(d.getPixel(5, 3) == true);
-//~ }
+
+    import std.stdio;
+
+    foreach(y; 0 .. 10)
+    {
+        foreach(x; 0 .. 32)
+            write(d.getPixel(x, y) ? '#' : ' ');
+
+        writeln("");
+    }
+}
 
 struct Symbol
 {
@@ -224,9 +227,9 @@ immutable ushort[256] defaultFont =
     0x7f04, 0x7800, 0x047d, 0x0000, 0x2040, 0x3d00, 0x7f10, 0x6c00,
     0x017f, 0x0000, 0x7c18, 0x7c00, 0x7c04, 0x7800, 0x3844, 0x3800,
     0x7c14, 0x0800, 0x0814, 0x7c00, 0x7c04, 0x0800, 0x4854, 0x2400,
-    0x043e, 0x4400, 0x3c40, 0x7c00, 0x1c60, 0x1c00, 0x7c30, 0x7c00, 
+    0x043e, 0x4400, 0x3c40, 0x7c00, 0x1c60, 0x1c00, 0x7c30, 0x7c00,
     0x6c10, 0x6c00, 0x4c50, 0x3c00, 0x6454, 0x4c00, 0x0836, 0x4100,
-    0x0077, 0x0000, 0x4136, 0x0800, 0x0201, 0x0201, 0x0205, 0x0200
+    0x0077, 0x0000, 0x4136, 0x0800, 0x0201, 0x0201, 0x0205, 0x0200,
 ];
 
 immutable ushort[16] defaultPalette =
