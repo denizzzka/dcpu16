@@ -83,6 +83,7 @@ unittest
         writeln("Loaded "~c.cpu.ins.toString);
         writeln(c.cpu.regs);
         writeln("Memory: "~c.memDump);
+        writeln("Stack:\n"~c.cpu.stackDump);
         c.cpu.step;
         writefln("Step %d executed", i);
     }

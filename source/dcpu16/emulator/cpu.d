@@ -39,6 +39,7 @@ struct Registers
 
 import std.bitmanip: bitfields;
 import dcpu16.emulator: Memory;
+import std.string: format;
 
 pure struct CPU
 {
@@ -211,6 +212,17 @@ pure struct CPU
                 return &operand;
         }
     }
+
+    string stackDump() const
+    {
+        string ret;
+
+        if(regs.sp != 0)
+            for(ushort i = 0xffff; i >= regs.sp; i--)
+                ret ~= format("%04x\n", mem[i]);
+
+        return ret;
+    }
 }
 
 enum Opcode : ubyte
@@ -281,7 +293,6 @@ struct Instruction
 
     string toString() const
     {
-        import std.string;
         import std.conv: to;
 
         return format!"opcode=%02x (%s), opA=%02x, opB=%02x"
