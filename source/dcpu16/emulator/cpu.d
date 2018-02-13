@@ -78,11 +78,13 @@ pure struct CPU
 
         if(!ins.spec_zeroes)
         {
+            enforce(ins.opcode <= Opcode.STD, "Wrong opcode");
+
             ushort* a_ptr = decodeOperand(ins.a, true);
             ushort a = *a_ptr;
             ushort b = *decodeOperand(ins.b, false);
 
-            with(Opcodes)
+            with(Opcode)
             with(regs)
             final switch(ins.opcode) // TODO: replace it with "wire connection matrix"
             {
@@ -211,7 +213,7 @@ pure struct CPU
     }
 }
 
-enum Opcodes : ubyte
+enum Opcode : ubyte
 {
     unused_0x00,
     SET, /// sets b to a
@@ -251,7 +253,7 @@ struct Instruction
 {
     ushort a;
     ushort b;
-    ubyte opcode;
+    Opcode opcode;
 
     alias spec_zeroes = opcode;
     alias spec_opcode = b;
@@ -273,7 +275,7 @@ struct Instruction
 
         a = u.a;
         b = u.b;
-        opcode = u.opcode;
+        opcode = cast(Opcode) u.opcode;
     }
 
     string toString() const
@@ -282,7 +284,7 @@ struct Instruction
         import std.conv: to;
 
         return format!"opcode=%02x (%s), opA=%02x, opB=%02x"
-            (opcode, (cast(Opcodes)opcode).to!string, a, b);
+            (opcode, opcode.to!string, a, b);
     }
 }
 
