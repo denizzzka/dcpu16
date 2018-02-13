@@ -8,8 +8,8 @@ struct Registers
 
         struct
         {
-            ushort a;
-            ushort b;
+            ushort A;
+            ushort B;
             ushort c;
             ushort x;
             ushort y;
@@ -81,8 +81,8 @@ pure struct CPU
             ushort b = *decodeOperand(ins.b, false);
 
             with(Opcodes)
-            with(regs.ex)
-            switch(ins.opcode)
+            with(regs)
+            switch(ins.opcode) // TODO: replace it with "wire connection matrix"
             {
                 case SET: r = a; break;
                 case ADD: r = b + a; ex = r >>> 16; break;
@@ -134,8 +134,8 @@ pure struct CPU
                 //~ case IFU: if (cast(short)b >= cast(short)a) dcpu.skipIfs(); return;
                 case ADX: r = b + a + ex; ex = (r >>> 16) ? 1 : 0; break;
                 case SBX: r = b - a + ex; auto under = cast(ushort) r >> 16; ex = under ? 0xffff : 0; break;
-                //~ case STI: ba.set(a); i = cast(ushort)(i + 1); j = cast(ushort)(j + 1); return;
-                //~ case STD: ba.set(a); i = cast(ushort)(i - 1); j = cast(ushort)(j - 1); return;
+                case STI: r = b; i++; j++; break;
+                case STD: r = b; i--; j--; break;
 
                 default:
                     enforce("Opcode isn't defined");
