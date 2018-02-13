@@ -126,8 +126,6 @@ unittest
 
     comp.cpu.reset;
 
-    import std.stdio;
-
     with(comp.cpu)
     with(regs)
     {
@@ -142,9 +140,7 @@ unittest
         assert(c == 1800);
         assert(A == 0xF8F7); // FIXME: should be 0xf8f8, see SUB comment above
         A = 0xf8f8;
-        writeln(comp.machineState);
         step;
-        writeln(comp.machineState);
         assert(c == cast(ushort) -1800);
         assert(A == 0xF8F8);
         step; assert(c == cast(ushort) -1800);

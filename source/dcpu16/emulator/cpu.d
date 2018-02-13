@@ -196,7 +196,7 @@ pure struct CPU
                 return;
             case HWI:
                 enforce(a < computer.devices.length, "Wrong device number");
-                computer.devices[a].handleInterrupt(computer);
+                computer.devices[a].handleHardwareInterrupt(computer);
                 return;
             case reserved:
             default:
