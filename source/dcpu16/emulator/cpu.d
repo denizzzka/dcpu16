@@ -165,19 +165,17 @@ pure struct CPU
         ushort* a_ptr = decodeOperand(ins.a, true);
         ushort a = *a_ptr;
 
-        int r;
-
         with(SpecialOpcode)
         with(regs)
         switch(ins.spec_opcode)
         {
             case JSR: push(pc); pc = a; return;
             case INT: isBurning = intQueue.addInterruptOrBurnOut(a); return;
-            case IAG: r = ia; break;
+            case IAG: a = ia; break;
             case IAS: ia = a; return;
             case RFI: assert(false, "Unimplemented");
             case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
-            case HWN: assert(false, "Unimplemented");
+            case HWN: a = 0; return; //TODO: number of connected hardware devices
             case HWQ: assert(false, "Unimplemented");
             case HWI: assert(false, "Unimplemented");
 
@@ -187,7 +185,7 @@ pure struct CPU
         }
 
         if(ins.a < 0x1f) // operand is not literal value
-            *a_ptr = cast(ushort) r;
+            *a_ptr = cast(ushort) a;
     }
 
     private void push(ushort val) pure
