@@ -153,7 +153,7 @@ pure struct CPU
                 *a_ptr = cast(ushort) r;
         }
         else
-            assert("Unimplemented");
+            assert(false, "Unimplemented");
     }
 
     private ushort* decodeRegisterOfOperand(in ushort operand) pure

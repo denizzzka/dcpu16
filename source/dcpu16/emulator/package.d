@@ -73,7 +73,7 @@ unittest
 
     c.cpu.reset;
 
-    foreach(i; 0 .. 3)
+    foreach(i; 0 .. 10)
     {
         writeln("Loaded "~c.cpu.ins.toString);
         writeln(c.cpu.regs);
