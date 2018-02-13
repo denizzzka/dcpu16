@@ -9,6 +9,9 @@ class LEM1802 : IDevice
     uint manufacturer() const pure { return 0x1c6c8b36; };
     ushort ver() const pure { return 0x1802 ; };
 
+    enum CHAR_SIZE_X = 4;
+    enum CHAR_SIZE_Y = 8;
+
     private const(ushort)* screen;
     private const(ushort)* font = defaultFont.ptr;
     private const(ushort)* palette = defaultPalette.ptr;
@@ -73,7 +76,7 @@ class LEM1802 : IDevice
         return Symbol(screen[idx]);
     }
 
-    bool getPixel(ubyte x, ubyte y) const
+    bool getPixel(uint x, uint y) const
     {
         enum CHARS_X_RESOLUTION = 32;
         enum CHARS_Y_RESOLUTION = 12;
@@ -83,15 +86,85 @@ class LEM1802 : IDevice
 
         auto s = getSymbol(symbolX + symbolY * CHARS_X_RESOLUTION);
 
-        enum CHAR_SIZE_X = 4;
-        enum CHAR_SIZE_Y = 8;
-
         auto relativeX = x % CHAR_SIZE_X;
-        auto relativeY = y % CHAR_SIZE_X;
+        auto relativeY = y % CHAR_SIZE_Y;
 
-        return false;
+        return true; // getPixelOfSymbol(screen[s.character], relativeX, relativeY);
+    }
+
+    static bool getPixelOfSymbol(ushort[2] _bitArray, uint relativeX, uint relativeY) pure
+    {
+        union CharBitArray
+        {
+            ushort[2] for_ctor;
+            ubyte[4] ub_arr;
+            alias ub_arr this;
+
+            this(ushort[2] from) pure
+            {
+                import std.bitmanip: swapEndian;
+
+                for_ctor[0] = swapEndian(from[0]);
+                for_ctor[1] = swapEndian(from[1]);
+            }
+        }
+
+        auto bitArray = CharBitArray(_bitArray);
+        relativeY %= CHAR_SIZE_Y;
+
+        auto ul = cast(ulong) bitArray[relativeX];
+        import core.bitop: bt;
+        return bt(&ul, relativeY) != 0;
+    }
+    unittest
+    {
+        import std.stdio;
+
+        /// 'F'
+        ushort[2] f_img =
+            [
+                0b11111111_00001001,
+                0b00001001_00000000
+            ];
+
+        immutable bool[][] pending =
+        [
+            [1,1,1,0],
+            [1,0,0,0],
+            [1,0,0,0],
+            [1,1,1,0],
+            [1,0,0,0],
+            [1,0,0,0],
+            [1,0,0,0],
+            [1,0,0,0],
+        ];
+
+        foreach(y; 0 .. 8)
+            foreach(x; 0 .. 4)
+                assert(pending[y][x] == getPixelOfSymbol(f_img, x, y));
     }
 }
+
+//~ unittest
+//~ {
+    //~ auto c = new Computer;
+    //~ auto d = new LEM1802(c);
+    //~ c.attachDevice = d;
+
+    //~ c.mem[0x8000 + 1] = 0b1111_0101_1_1000110; // 'F'
+
+    //~ import std.stdio;
+
+    //~ foreach(y; 0 .. 8)
+    //~ {
+        //~ foreach(x; 0 .. 4)
+            //~ write(d.getPixel(x, y) ? '#' : ' ');
+
+        //~ writeln("");
+    //~ }
+
+    //~ assert(d.getPixel(5, 3) == true);
+//~ }
 
 struct Symbol
 {

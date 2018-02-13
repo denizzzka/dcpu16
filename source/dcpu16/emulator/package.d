@@ -14,13 +14,17 @@ class Computer
     CPU cpu;
     IDevice[] devices;
 
-    this(IDevice[] devs = null) pure
+    this() pure
     {
         mem.length = 0x10000;
         cpu = CPU(this);
+    }
 
-        enforce(devs.length <= short.max);
-        devices = devs;
+    void attachDevice(IDevice dev) pure
+    {
+        devices ~= dev;
+
+        enforce(devices.length <= short.max);
     }
 
     void reset() pure
