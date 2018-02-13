@@ -46,22 +46,30 @@ pure struct CPU
 
     Memory mem;
     Registers regs;
+    Instruction ins;
 
     this(ref Memory m) pure
     {
         mem = m;
+        loadIns;
     }
 
     void reset() pure
     {
         regs.reset;
+        loadIns;
+    }
+
+    private void loadIns() pure
+    {
+        ins = Instruction(mem[regs.pc]);
     }
 
     void step()
     {
-        Instruction ins = Instruction(mem[regs.pc]);
         executeInstruction(ins);
         regs.pc++;
+        loadIns;
     }
 
     private void executeInstruction(ref Instruction ins) pure
@@ -266,6 +274,15 @@ struct Instruction
         a = u.a;
         b = u.b;
         opcode = u.opcode;
+    }
+
+    string toString() const
+    {
+        import std.string;
+        import std.conv: to;
+
+        return format!"opcode=%02x (%s), opA=%02x, opB=%02x"
+            (opcode, (cast(Opcodes)opcode).to!string, a, b);
     }
 }
 

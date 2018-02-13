@@ -57,8 +57,14 @@ unittest
     c.load(new ubyte[10]);
     c.load("examples/loop.bin");
 
+    assert(c.mem[0] != 0, "First instruction is null");
+
+    c.cpu.reset;
+
     foreach(i; 0 .. 3)
     {
+        writefln("Step %d", i);
+        writeln(c.cpu.ins);
         writeln(c.cpu.regs);
         c.cpu.step;
     }
