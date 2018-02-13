@@ -79,22 +79,24 @@ class LEM1802 : IDevice
     bool getPixel(uint x, uint y) const
     {
         enum CHARS_X_RESOLUTION = 32;
-        enum CHARS_Y_RESOLUTION = 12;
 
-        auto symbolX = x / CHARS_X_RESOLUTION;
-        auto symbolY = y / CHARS_Y_RESOLUTION;
+        auto symbolX = x / CHAR_SIZE_X;
+        auto symbolY = y / CHAR_SIZE_Y;
 
         auto s = getSymbol(symbolX + symbolY * CHARS_X_RESOLUTION);
-        auto charPtr = &font[s.character];
+        auto charImgPtr = &font[s.character * 2];
 
         auto relativeX = x % CHAR_SIZE_X;
         auto relativeY = y % CHAR_SIZE_Y;
 
-        return getPixelOfSymbol(charPtr[0 .. 2], relativeX, relativeY);
+        return getPixelOfSymbol(charImgPtr[0 .. 2], relativeX, relativeY);
     }
 
-    static bool getPixelOfSymbol(ushort[2] _bitArray, uint relativeX, uint relativeY) pure
+    static bool getPixelOfSymbol(ushort[2] symbolBitmap, uint relativeX, uint relativeY) pure
     {
+        assert(relativeX < CHAR_SIZE_X);
+        assert(relativeY < CHAR_SIZE_Y);
+
         union CharBitArray
         {
             ushort[2] for_ctor;
@@ -110,7 +112,7 @@ class LEM1802 : IDevice
             }
         }
 
-        auto bitArray = CharBitArray(_bitArray);
+        auto bitArray = CharBitArray(symbolBitmap);
         relativeY %= CHAR_SIZE_Y;
 
         auto ul = cast(ulong) bitArray[relativeX];
@@ -152,17 +154,18 @@ unittest
     auto d = new LEM1802(c);
     c.attachDevice = d;
 
-    char sym = 'a';
-    //~ c.mem[0x8000] = 0b1111_0101_1_1000110;
-    c.mem[0x8000] = 0x46;
-
-    //~ assert(d.getPixel(5, 3) == true);
+    c.mem[0x8000] = '1';
+    c.mem[0x8001] = '2';
+    c.mem[0x8002] = '3';
+    c.mem[0x8033] = 'a';
+    c.mem[0x8034] = 'b';
+    c.mem[0x8035] = 'c';
 
     import std.stdio;
 
-    foreach(y; 0 .. 10)
+    foreach(y; 0 .. 16)
     {
-        foreach(x; 0 .. 32)
+        foreach(x; 0 .. 12)
             write(d.getPixel(x, y) ? '#' : ' ');
 
         writeln("");
