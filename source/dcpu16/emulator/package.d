@@ -125,7 +125,12 @@ unittest
 
     with(comp.cpu.regs)
     {
-        writeln(comp.machineState); comp.cpu.step; writeln(c); writeln(comp.machineState); assert(c == 500);
-        comp.cpu.step; assert(c == 999);
+        import std.conv: to;
+
+        writeln(comp.machineState); comp.cpu.step; assert(c == 500, c.to!string);
+        writeln(comp.machineState); comp.cpu.step; assert(c == 999, c.to!string);
+        writeln(comp.machineState); comp.cpu.step; assert(c == 900, c.to!string);
+        writeln(comp.machineState); comp.cpu.step; assert(c == 1800, c.to!string);
+        //~ writeln(comp.machineState); comp.cpu.step; writeln(comp.machineState); assert(c == 1800 && A == 0xFFFF);
     }
 }

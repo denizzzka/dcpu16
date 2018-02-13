@@ -147,7 +147,7 @@ pure struct CPU
                     enforce("Wrong opcode");
             }
 
-            if(a < 0x1f) // operand is not literal value
+            if(ins.b < 0x1f) // operand is not literal value
                 *b_ptr = cast(ushort) r;
         }
         else
