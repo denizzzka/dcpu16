@@ -258,10 +258,10 @@ enum Opcode : ubyte
 
 struct Instruction
 {
-    ushort a;
+    ushort a; //TODO: rename to operandA
     union
     {
-        ushort b;
+        ushort b; //TODO: rename to operandB
         ushort spec_opcode;
     }
     Opcode opcode;
