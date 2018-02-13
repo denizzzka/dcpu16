@@ -65,6 +65,49 @@ class LEM1802 : IDevice
 
         mem[to .. to + from.length] = from[];
     }
+
+    const(Symbol) getSymbol(size_t idx) const
+    {
+        assert(idx < 386);
+
+        return Symbol(screen[idx]);
+    }
+
+    bool getPixel(ubyte x, ubyte y) const
+    {
+        enum CHARS_X_RESOLUTION = 32;
+        enum CHARS_Y_RESOLUTION = 12;
+
+        auto symbolX = x / CHARS_X_RESOLUTION;
+        auto symbolY = y / CHARS_Y_RESOLUTION;
+
+        auto s = getSymbol(symbolX + symbolY * CHARS_X_RESOLUTION);
+
+        enum CHAR_SIZE_X = 4;
+        enum CHAR_SIZE_Y = 8;
+
+        auto relativeX = x % CHAR_SIZE_X;
+        auto relativeY = y % CHAR_SIZE_X;
+
+        return false;
+    }
+}
+
+struct Symbol
+{
+    import std.bitmanip: bitfields;
+
+    union
+    {
+        ushort word;
+
+        mixin(bitfields!(
+            ubyte, "character",  7,
+            bool,  "blinking",   1,
+            ubyte, "background", 4,
+            ubyte, "foreground", 4,
+        ));
+    }
 }
 
 enum InterruptActions : ushort
