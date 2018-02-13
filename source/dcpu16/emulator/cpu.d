@@ -47,30 +47,27 @@ pure struct CPU
 
     Memory mem;
     Registers regs;
-    Instruction ins;
 
     this(ref Memory m) pure
     {
         mem = m;
-        loadIns;
     }
 
     void reset() pure
     {
         regs.reset;
-        loadIns;
-    }
-
-    private void loadIns() pure
-    {
-        ins = Instruction(mem[regs.pc]);
     }
 
     void step()
     {
+        auto ins = getCurrInstruction;
         regs.pc++;
         executeInstruction(ins);
-        loadIns;
+    }
+
+    Instruction getCurrInstruction() const
+    {
+        return Instruction(mem[regs.pc]);
     }
 
     private void executeInstruction(ref Instruction ins) pure

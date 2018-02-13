@@ -1,5 +1,7 @@
 module dcpu16.emulator;
 
+import std.string: format;
+
 alias Memory = ushort[];
 
 class Computer
@@ -57,14 +59,21 @@ class Computer
 
     string memDump() const
     {
-        import std.string;
-
         string ret;
 
         for(auto i = 0; i < 16; i++)
             ret ~= format("%04x ", mem[i]);
 
         return ret;
+    }
+
+    string machineState() const
+    {
+        return format("Current instruction: %s\n%s\nMemory: %s\n",
+                cpu.getCurrInstruction.toString,
+                cpu.regs.toString,
+                memDump
+            );
     }
 }
 
@@ -116,7 +125,7 @@ unittest
 
     with(comp.cpu.regs)
     {
-        comp.cpu.step; writeln(c); assert(c == 500);
+        writeln(comp.machineState); comp.cpu.step; writeln(c); writeln(comp.machineState); assert(c == 500);
         comp.cpu.step; assert(c == 999);
     }
 }
