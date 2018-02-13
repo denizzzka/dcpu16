@@ -178,7 +178,11 @@ pure struct CPU
             case INT: isBurning = intQueue.addInterruptOrBurnOut(a); return;
             case IAG: a = ia; break;
             case IAS: ia = a; return;
-            case RFI: assert(false, "Unimplemented");
+            case RFI:
+                intQueue.isTriggeringEnabled = false;
+                A = pop();
+                pc = pop();
+                return;
             case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
             case HWN: a = cast(ushort) computer.devices.length; return;
             case HWQ:
@@ -205,6 +209,11 @@ pure struct CPU
     {
         regs.sp--;
         mem[regs.sp] = val;
+    }
+
+    private ushort pop() pure
+    {
+        return mem[regs.sp++];
     }
 
     private ushort* decodeRegisterOfOperand(in ushort operand) pure
