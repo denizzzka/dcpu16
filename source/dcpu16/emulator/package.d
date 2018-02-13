@@ -49,11 +49,19 @@ class Computer
     }
 }
 
-pure:
-
 unittest
 {
+    import std.stdio;
+
     auto c = new Computer();
     c.load(new ubyte[10]);
-    c.reset();
+    c.load("examples/loop.bin");
+
+    foreach(i; 0 .. 3)
+    {
+        writeln(c.cpu.regs);
+        c.cpu.step;
+    }
+
+    c.reset;
 }

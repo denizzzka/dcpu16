@@ -27,6 +27,14 @@ struct Registers
     {
         this = Registers();
     }
+
+    string toString() const
+    {
+        import std.string;
+
+        return format!"A:%04x B:%04x C:%04x X:%04x Y:%04x Z:%04x I:%04x J:%04x SP:%04x PC:%04x EX:%04x IA:%04x"
+            (A, B, c, x, y, z, i, j, sp, pc, ex, ia);
+    }
 }
 
 import std.bitmanip: bitfields;
@@ -67,7 +75,9 @@ pure struct CPU
 
     void step()
     {
-        Instruction curr = Instruction(mem[regs.pc]);
+        Instruction ins = Instruction(mem[regs.pc]);
+        executeInstruction(ins);
+        regs.pc++;
     }
 
     private void executeInstruction(ref Instruction ins) pure
