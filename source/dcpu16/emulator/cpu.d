@@ -68,8 +68,8 @@ pure struct CPU
 
     void step()
     {
-        executeInstruction(ins);
         regs.pc++;
+        executeInstruction(ins);
         loadIns;
     }
 
