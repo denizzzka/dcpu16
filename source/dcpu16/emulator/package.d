@@ -47,6 +47,18 @@ class Computer
             mem[i] = littleEndianToNative!ushort(d);
         }
     }
+
+    string memDump() const
+    {
+        import std.string;
+
+        string ret;
+
+        for(auto i = 0; i < 16; i++)
+            ret ~= format("%04x ", mem[i]);
+
+        return ret;
+    }
 }
 
 unittest
@@ -63,10 +75,11 @@ unittest
 
     foreach(i; 0 .. 3)
     {
-        writefln("Step %d", i);
-        writeln(c.cpu.ins);
+        writeln("Loaded "~c.cpu.ins.toString);
         writeln(c.cpu.regs);
+        writeln("Memory: "~c.memDump);
         c.cpu.step;
+        writefln("Step %d executed", i);
     }
 
     c.reset;
