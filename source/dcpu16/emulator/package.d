@@ -7,14 +7,17 @@ alias Memory = ushort[];
 class Computer
 {
     import dcpu16.emulator.cpu;
+    import dcpu16.emulator.idevice;
 
     Memory mem;
     CPU cpu;
+    IDevice[] devices;
 
-    this() pure
+    this(IDevice[] devs = null) pure
     {
         mem.length = 0x10000;
-        cpu = CPU(mem);
+        cpu = CPU(this);
+        devices = devs;
     }
 
     void reset() pure

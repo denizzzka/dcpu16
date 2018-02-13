@@ -38,21 +38,26 @@ struct Registers
 }
 
 import std.bitmanip: bitfields;
-import dcpu16.emulator: Memory;
+import dcpu16.emulator;
 import std.string: format;
 
 pure struct CPU
 {
     import std.exception: enforce;
 
-    Memory mem;
+    Computer computer;
     Registers regs;
     InteruptQueue intQueue;
     bool isBurning;
 
-    this(ref Memory m) pure
+    this(Computer c) pure
     {
-        mem = m;
+        computer = c;
+    }
+
+    ref inout(Memory) mem() inout pure
+    {
+        return computer.mem;
     }
 
     void reset() pure
@@ -377,10 +382,10 @@ struct Instruction
 
 pure unittest
 {
-    Memory mem = new ushort[0x10000];
-    auto cpu = CPU(mem);
+    auto comp = new Computer;
+    auto cpu = CPU(comp);
     cpu.regs.x = 123;
-    mem[123] = 456;
+    comp.mem[123] = 456;
 
     ushort o1 = 0x03;
     ushort o2 = 0x0b;
