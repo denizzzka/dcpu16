@@ -11,7 +11,7 @@ class LEM1802 : IDevice
 
     private ushort* screen;
     private const(ushort)* font = defaultFont.ptr;
-    private ushort* palette;
+    private const(ushort)* palette = defaultPalette.ptr;
     private ubyte borderColor;
 
     bool isDisconnected() const { return screen is null; }
@@ -31,7 +31,7 @@ class LEM1802 : IDevice
                 return;
 
             case 2:
-                palette = &mem[B];
+                palette = (B == 0) ? defaultPalette.ptr : &mem[B];
                 return;
 
             case 3:
@@ -78,4 +78,12 @@ immutable ushort[256] defaultFont =
     0x043e, 0x4400, 0x3c40, 0x7c00, 0x1c60, 0x1c00, 0x7c30, 0x7c00, 
     0x6c10, 0x6c00, 0x4c50, 0x3c00, 0x6454, 0x4c00, 0x0836, 0x4100,
     0x0077, 0x0000, 0x4136, 0x0800, 0x0201, 0x0201, 0x0205, 0x0200
+];
+
+immutable ushort[16] defaultPalette =
+[
+	0x000, 0x00a, 0x0a0, 0x0aa,
+	0xa00, 0xa0a, 0xa50, 0xaaa,
+	0x555, 0x55f, 0x5f5, 0x5ff,
+	0xf55, 0xf5f, 0xff5, 0xfff
 ];
