@@ -34,7 +34,7 @@ class Computer
     void load(ubyte[] from) pure
     {
         import std.exception: enforce;
-        import std.bitmanip : littleEndianToNative;
+        import std.bitmanip;
 
         enforce(from.length <= Memory.sizeof);
         enforce(from.length % 2 == 0);
@@ -66,8 +66,13 @@ unittest
     import std.stdio;
 
     auto c = new Computer();
-    c.load(new ubyte[10]);
-    c.load("examples/loop.bin");
+    c.mem[0 .. 3] =
+        [
+            0x8801, // set a, 1
+            0x9002, // add a, 3 :loop
+            0x8b81, // set pc, loop
+        ];
+    //~ c.load("examples/loop.bin");
 
     assert(c.mem[0] != 0, "First instruction is null");
 
