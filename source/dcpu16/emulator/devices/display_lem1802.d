@@ -163,15 +163,15 @@ class LEM1802 : IDevice
         for(ushort idx = 0; idx < CHARS_X_RESOLUTION * CHARS_Y_RESOLUTION; idx++)
         {
             const s = getSymbol(idx);
-            auto bitmap = getSymbolBitmap(s.character);
-
-            RGB foreground;
+            const bitmap = getSymbolBitmap(s.character);
+            RGB fg = PaletteColor(palette[s.foreground]).toRGB;
+            RGB bg = PaletteColor(palette[s.background]).toRGB;
 
             for(ubyte relY = 0; relY < CHAR_SIZE_Y; relY++)
             {
                 for(ubyte relX = 0; relX < CHAR_SIZE_X; relX++)
                 {
-                    //~ ret[currPixel] = getPixelOfSymbol(bitmap, relX, relY);
+                    ret[currPixel] = getPixelOfSymbol(bitmap, relX, relY) ? fg : bg;
 
                     currPixel++;
                 }
@@ -208,10 +208,10 @@ unittest
     assert(d.getPixel(6, 4) == false);
 }
 
+import std.bitmanip: bitfields;
+
 struct Symbol
 {
-    import std.bitmanip: bitfields;
-
     union
     {
         ushort word;
@@ -222,6 +222,32 @@ struct Symbol
             ubyte, "background", 4,
             ubyte, "foreground", 4,
         ));
+    }
+}
+
+struct PaletteColor
+{
+    union
+    {
+        ushort word;
+
+        mixin(bitfields!(
+            ubyte, "b", 4,
+            ubyte, "g", 4,
+            ubyte, "r", 4,
+            ubyte, "",  4,
+        ));
+    }
+
+    RGB toRGB() const
+    {
+        RGB s;
+
+        s.r = r;
+        s.g = g;
+        s.b = b;
+
+        return s;
     }
 }
 
