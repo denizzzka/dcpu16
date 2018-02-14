@@ -3,17 +3,18 @@ module dcpu16.emulator.devices.lem1802;
 import dcpu16.emulator.idevice;
 import dcpu16.emulator;
 
+enum CHAR_SIZE_X = 4;
+enum CHAR_SIZE_Y = 8;
+enum CHARS_X_RESOLUTION = 32;
+enum CHARS_Y_RESOLUTION = 12;
+enum PIXELS_NUM = CHARS_X_RESOLUTION * CHARS_Y_RESOLUTION * CHAR_SIZE_X * CHAR_SIZE_Y;
+static assert(PIXELS_NUM == 128 * 96);
+
 class LEM1802 : IDevice
 {
     uint id() const pure { return 0x7349f615; };
     uint manufacturer() const pure { return 0x1c6c8b36; };
     ushort ver() const pure { return 0x1802 ; };
-
-    enum CHAR_SIZE_X = 4;
-    enum CHAR_SIZE_Y = 8;
-    enum CHARS_X_RESOLUTION = 32;
-    enum CHARS_Y_RESOLUTION = 32;
-    enum PIXELS_NUM = CHARS_X_RESOLUTION * CHARS_Y_RESOLUTION * CHAR_SIZE_X * CHAR_SIZE_Y;
 
     private const(ushort)* screen;
     private const(ushort)* font = defaultFont.ptr;
@@ -79,12 +80,17 @@ class LEM1802 : IDevice
         return Symbol(screen[idx]);
     }
 
+    const(Symbol) getSymbol(uint x, uint y) const
+    {
+        return getSymbol(x + y * CHARS_X_RESOLUTION);
+    }
+
     bool getPixel(uint x, uint y) const
     {
         auto symbolX = x / CHAR_SIZE_X;
         auto symbolY = y / CHAR_SIZE_Y;
 
-        auto s = getSymbol(symbolX + symbolY * CHARS_X_RESOLUTION);
+        auto s = getSymbol(symbolX, symbolY);
         auto bitmap = getSymbolBitmap(s.character);
 
         auto relativeX = x % CHAR_SIZE_X;
@@ -150,35 +156,45 @@ class LEM1802 : IDevice
 
     private ushort[2] getSymbolBitmap(ubyte character) pure const
     {
-        auto charImgPtr = &font[character * 2];
+        const ushort* ptr = &font[character * 2];
 
-        return charImgPtr[0 .. 2];
+        return ptr[0 .. 2];
     }
 
+    // TODO: make it more faster
     RGB[PIXELS_NUM] getRgbFrame() const
     {
         RGB[PIXELS_NUM] ret;
         size_t currPixel;
 
-        for(ushort idx = 0; idx < CHARS_X_RESOLUTION * CHARS_Y_RESOLUTION; idx++)
+        for(ubyte y = 0; y < CHARS_Y_RESOLUTION * CHAR_SIZE_Y; y++)
         {
-            const s = getSymbol(idx);
-            const bitmap = getSymbolBitmap(s.character);
-            RGB fg = PaletteColor(palette[s.foreground]).toRGB;
-            RGB bg = PaletteColor(palette[s.background]).toRGB;
-
-            for(ubyte relY = 0; relY < CHAR_SIZE_Y; relY++)
+            for(ubyte x = 0; x < CHARS_X_RESOLUTION * CHAR_SIZE_X; x++)
             {
-                for(ubyte relX = 0; relX < CHAR_SIZE_X; relX++)
-                {
-                    ret[currPixel] = getPixelOfSymbol(bitmap, relX, relY) ? fg : bg;
+                const s = getSymbol(x / CHAR_SIZE_X, y / CHAR_SIZE_Y);
+                const bitmap = getSymbolBitmap(s.character);
+                RGB fg = getColor(s.foreground).toRGB;
+                RGB bg = getColor(s.background).toRGB;
+                import std.stdio;
+                writefln("%s %s %d",fg, bg, currPixel);
 
-                    currPixel++;
-                }
+                ret[currPixel] = getPixel(x, y) ? fg : bg;
+                //~ ret[currPixel] = getPixel(x, y) ? RGB(255, 255, 255) : RGB(77, 77, 77);
+
+                currPixel++;
             }
         }
 
+        assert(currPixel == PIXELS_NUM);
+
         return ret;
+    }
+
+    private PaletteColor getColor(ubyte paletteIndex) const
+    {
+        ushort c = palette[paletteIndex];
+
+        return PaletteColor(c);
     }
 }
 
@@ -188,11 +204,11 @@ unittest
     auto d = new LEM1802(c);
     c.attachDevice = d;
 
-    c.mem[0x8000] = '1';
+    c.mem[0x8000] = 0b0111_1110_0_0000000 + '1'; // colored nonblinking '1'
     c.mem[0x8001] = '2';
     c.mem[0x8002] = '3';
     c.mem[0x8000 + 32] = 'a';
-    c.mem[0x8000 + 33] = 'b';
+    c.mem[0x8000 + 33] = 0b0101_0110_1_0000000 + 'b';
     c.mem[0x8000 + 34] = 'c';
 
     import std.stdio;
@@ -206,6 +222,14 @@ unittest
 
     assert(d.getPixel(5, 4) == true);
     assert(d.getPixel(6, 4) == false);
+
+    auto f = d.getRgbFrame;
+
+    assert(f[0] == RGB(255, 255, 85));
+    assert(f[1] == RGB(170, 170, 170));
+    assert(f[4] == RGB(0, 0, 0));
+    assert(f[1028] == RGB(170, 0, 170));
+    assert(f[1029] == RGB(170, 85, 0));
 }
 
 import std.bitmanip: bitfields;
@@ -243,9 +267,9 @@ struct PaletteColor
     {
         RGB s;
 
-        s.r = r;
-        s.g = g;
-        s.b = b;
+        s.r += r; s.r *= 17;
+        s.g += g; s.g *= 17;
+        s.b += b; s.b *= 17;
 
         return s;
     }
