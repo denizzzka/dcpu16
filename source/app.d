@@ -40,7 +40,6 @@ extern (C) int UIAppMain(string[] args)
         comp.cpu.step;
     }
 
-    size_t idx;
     disp.forEachPixel(
         (x, y, c)
         {
@@ -51,7 +50,6 @@ extern (C) int UIAppMain(string[] args)
                     0
                 );
             emulScr.cdbuf.drawPixel(x, y, rgba);
-            idx++;
         }
     );
 
