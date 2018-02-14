@@ -128,8 +128,6 @@ class LEM1802 : IDevice
     }
     unittest
     {
-        import std.stdio;
-
         /// 'F'
         ushort[2] f_img =
             [
@@ -175,11 +173,8 @@ class LEM1802 : IDevice
                 const bitmap = getSymbolBitmap(s.character);
                 RGB fg = getColor(s.foreground).toRGB;
                 RGB bg = getColor(s.background).toRGB;
-                import std.stdio;
-                writefln("%s %s %d",fg, bg, currPixel);
 
                 ret[currPixel] = getPixel(x, y) ? fg : bg;
-                //~ ret[currPixel] = getPixel(x, y) ? RGB(255, 255, 255) : RGB(77, 77, 77);
 
                 currPixel++;
             }
@@ -210,8 +205,6 @@ unittest
     c.mem[0x8000 + 32] = 'a';
     c.mem[0x8000 + 33] = 0b0101_0110_1_0000000 + 'b';
     c.mem[0x8000 + 34] = 'c';
-
-    import std.stdio;
 
     assert(d.getSymbol(0).character == '1');
     assert(d.getSymbol(1).character == '2');
