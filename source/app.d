@@ -16,8 +16,9 @@ extern (C) int UIAppMain(string[] args)
             //~ ImageWidget { minWidth: 256; minHeight: 128; id: EMUL_0 }
 
             HorizontalLayout {
-                Button { id: PAUSE; text: "Pause" }
                 Button { id: STEP; text: "Step" }
+                Button { id: PAUSE; text: "Pause" }
+                Button { id: RESET_CPU; text: "Reset CPU" }
             }
         }
     });
@@ -41,6 +42,12 @@ extern (C) int UIAppMain(string[] args)
 
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
             emulScr.comp.cpu.step;
+            comp.machineState.writeln;
+            return true;
+        });
+
+    window.mainWidget.childById("RESET_CPU").addOnClickListener((Widget) {
+            emulScr.comp.cpu.reset;
             comp.machineState.writeln;
             return true;
         });
