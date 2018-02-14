@@ -5,6 +5,7 @@ DCPU-16 emulator
 
 TODO:
 
+* Interrupts
 * GUI
 * Keyboard
 * Other standard hardware support
