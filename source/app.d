@@ -11,9 +11,7 @@ extern (C) int UIAppMain(string[] args)
     window.mainWidget = parseML(q{
         VerticalLayout
         {
-            TextWidget { text: "Hello World example for DlangUI"; fontSize: 150%; fontWeight: 800 }
-
-            //~ ImageWidget { minWidth: 256; minHeight: 128; id: EMUL_0 }
+            TextWidget { text: "DCPU-16 emulator"; fontSize: 150%; fontWeight: 800 }
 
             HorizontalLayout {
                 Button { id: STEP; text: "Step" }
@@ -33,7 +31,6 @@ extern (C) int UIAppMain(string[] args)
 
     auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN0", comp, disp);
     window.mainWidget.insertChild(emulScr, 1);
-    emulScr.setTimer(100);
 
     window.mainWidget.childById("PAUSE").addOnClickListener((Widget) {
             emulScr.isPaused = !emulScr.isPaused;
@@ -59,6 +56,8 @@ extern (C) int UIAppMain(string[] args)
     ];
     comp.load(scrFill);
 
+    emulScr.startClocking();
+
     // show window
     window.show();
 
@@ -78,6 +77,9 @@ class EmulatorScreenWidget : ImageWidget
     private LEM1802 display;
     bool isPaused = true;
 
+    private ulong clockTimer;
+    private ulong screenDrawTimer;
+
     this(string id, Computer c, LEM1802 d)
     {
         super(id);
@@ -94,20 +96,33 @@ class EmulatorScreenWidget : ImageWidget
         display = d;
     }
 
+    void startClocking()
+    {
+        clockTimer = setTimer(100);
+        screenDrawTimer = setTimer(1000);
+    }
+
     override bool onTimer(ulong id)
     {
-        import std.stdio;
-
-        if(!isPaused)
+        if(id == clockTimer)
         {
-            comp.cpu.step;
-            comp.machineState.writeln;
+            import std.stdio;
+
+            if(!isPaused)
+            {
+                comp.cpu.step;
+                comp.machineState.writeln;
+            }
+        }
+        else if(screenDrawTimer)
+        {
+            invalidate();
         }
 
         return true;
     }
 
-    private void refreshFrameToBuf()
+    private void placeFrameToBuf()
     {
         display.forEachPixel(
             (x, y, c)
@@ -128,6 +143,8 @@ class EmulatorScreenWidget : ImageWidget
     {
         if(visibility != Visibility.Visible)
             return;
+
+        placeFrameToBuf();
 
         super.onDraw(buf);
 
