@@ -65,9 +65,6 @@ extern (C) int UIAppMain(string[] args)
     return Platform.instance.enterMessageLoop();
 }
 
-alias RGBA = uint;
-alias RGBAframe = uint[PIXELS_NUM];
-
 import dcpu16.emulator.devices.lem1802;
 
 class EmulatorScreenWidget : ImageWidget
@@ -83,10 +80,8 @@ class EmulatorScreenWidget : ImageWidget
     this(string id, Computer c, LEM1802 d)
     {
         super(id);
-        minWidth = 256;
-        minHeight = 128;
 
-        cdbuf = new ColorDrawBuf(X_RESOLUTION, Y_RESOLUTION);
+        cdbuf = new ColorDrawBuf(X_PIXELS, Y_PIXELS);
         cdbuf.fill(123);
 
         Ref!DrawBuf r = cdbuf ;
@@ -116,7 +111,13 @@ class EmulatorScreenWidget : ImageWidget
         }
         else if(screenDrawTimer)
         {
+            import dlangui.platforms.sdl.sdlapp;
+
             invalidate();
+            (cast(SDLWindow)window).redraw();
+
+            import std.stdio;
+            writeln("screenDrawTimer");
         }
 
         return true;
@@ -127,12 +128,15 @@ class EmulatorScreenWidget : ImageWidget
         display.forEachPixel(
             (x, y, c)
             {
-                auto rgba = makeRGBA(
-                        c.r * 17,
-                        c.g * 17,
-                        c.b * 17,
-                        0
-                    );
+                //~ auto rgba = makeRGBA(
+                        //~ c.r * 17,
+                        //~ c.g * 17,
+                        //~ c.b * 17,
+                        //~ 0
+                    //~ );
+
+                auto rgba = x % 2 ? 45 : 99;
+                rgba += y % 2 ? 45 : 99;
 
                 cdbuf.drawPixel(x, y, rgba);
             }
