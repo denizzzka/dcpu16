@@ -159,26 +159,40 @@ class LEM1802 : IDevice
         return ptr[0 .. 2];
     }
 
-    // TODO: make it more faster
-    RGB[PIXELS_NUM] getRgbFrame() const
+    void forEachPixel(void delegate(PaletteColor c) dg) const
     {
-        RGB[PIXELS_NUM] ret;
-        size_t currPixel;
-
         for(ubyte y = 0; y < Y_RESOLUTION * CHAR_SIZE_Y; y++)
         {
             for(ubyte x = 0; x < X_RESOLUTION * CHAR_SIZE_X; x++)
             {
                 const s = getSymbol(x / CHAR_SIZE_X, y / CHAR_SIZE_Y);
                 const bitmap = getSymbolBitmap(s.character);
-                RGB fg = getColor(s.foreground).toRGB;
-                RGB bg = getColor(s.background).toRGB;
 
-                ret[currPixel] = getPixel(x, y) ? fg : bg;
+                PaletteColor c;
 
-                currPixel++;
+                if(getPixel(x, y))
+                    c = getColor(s.foreground);
+                else
+                    c = getColor(s.background);
+
+                dg(c);
             }
         }
+    }
+
+    // TODO: make it more faster
+    RGB[PIXELS_NUM] getRgbFrame() const
+    {
+        RGB[PIXELS_NUM] ret;
+        size_t currPixel;
+
+        forEachPixel(
+            (c)
+            {
+                ret[currPixel] = c.toRGB;
+                currPixel++;
+            }
+        );
 
         assert(currPixel == PIXELS_NUM);
 
