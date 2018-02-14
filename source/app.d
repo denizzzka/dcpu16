@@ -9,8 +9,9 @@ extern (C) int UIAppMain(string[] args)
     window.mainWidget = parseML(q{
         VerticalLayout
         {
-            TextWidget { text: "Hello World example for DlangUI"; textColor: "red"; fontSize: 150%; fontWeight: 800; fontFace: "Arial" }
-            // arrange controls as form - table with two columns
+            TextWidget { text: "Hello World example for DlangUI"; fontSize: 150%; fontWeight: 800 }
+
+            ImageWidget {  }
 
             HorizontalLayout {
                 Button { id: btnOk; text: "Ok" }
@@ -19,6 +20,39 @@ extern (C) int UIAppMain(string[] args)
         }
     });
 
+    import dcpu16.emulator;
+    import dcpu16.emulator.devices.lem1802;
+
+    auto comp = new Computer;
+    auto disp = new LEM1802(comp);
+    comp.attachDevice = disp;
+
+    enum blob = import("test.bin");
+    comp.load(cast(ubyte[]) blob);
+
+    foreach(_; 0 .. 4000)
+    {
+        import std.stdio;
+        comp.machineState.writeln;
+        comp.cpu.step;
+    }
+
+    import dlangui.graphics.images;
+
+    uint[PIXELS_NUM] frame;
+    size_t idx;
+    disp.forEachPixel(
+        (PaletteColor c)
+        {
+            frame[idx] = makeRGBA(
+                    c.r * 17,
+                    c.g * 17,
+                    c.b * 17,
+                    0
+                );
+            idx++;
+        }
+    );
 
     // show window
     window.show();
