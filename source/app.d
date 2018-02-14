@@ -20,11 +20,7 @@ extern (C) int UIAppMain(string[] args)
         }
     });
 
-    //~ import dlangui.graphics.images;
-    import dlangui.graphics.drawbuf;
-
-    ColorDrawBuf cdbuf = new ColorDrawBuf(X_RESOLUTION, Y_RESOLUTION);
-    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN0", cdbuf);
+    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN0");
     window.mainWidget.insertChild(emulScr, 1);
 
     import dcpu16.emulator;
@@ -43,8 +39,6 @@ extern (C) int UIAppMain(string[] args)
         comp.machineState.writeln;
         comp.cpu.step;
     }
-
-    cdbuf.fill(123);
 
     size_t idx;
     disp.forEachPixel(
@@ -77,14 +71,16 @@ class EmulatorScreenWidget : ImageWidget
 {
     private ColorDrawBuf cdbuf;
 
-    this(string id, ColorDrawBuf db)
+    this(string id)
     {
         super(id);
         minWidth = 256;
         minHeight = 128;
 
-        cdbuf = db;
-        Ref!DrawBuf r = cdbuf;
+        cdbuf = new ColorDrawBuf(X_RESOLUTION, Y_RESOLUTION);
+        cdbuf.fill(123);
+
+        Ref!DrawBuf r = cdbuf ;
         drawable = new ImageDrawable(r);
     }
 
