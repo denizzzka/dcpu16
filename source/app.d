@@ -11,7 +11,7 @@ extern (C) int UIAppMain(string[] args)
         {
             TextWidget { text: "Hello World example for DlangUI"; fontSize: 150%; fontWeight: 800 }
 
-            ImageWidget {  }
+            //~ ImageWidget { minWidth: 256; minHeight: 128; id: EMUL_0 }
 
             HorizontalLayout {
                 Button { id: btnOk; text: "Ok" }
@@ -19,6 +19,13 @@ extern (C) int UIAppMain(string[] args)
             }
         }
     });
+
+    //~ import dlangui.graphics.images;
+    import dlangui.graphics.drawbuf;
+
+    ColorDrawBuf cdbuf = new ColorDrawBuf(X_RESOLUTION, Y_RESOLUTION);
+    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN0", cdbuf);
+    window.mainWidget.insertChild(emulScr, 1);
 
     import dcpu16.emulator;
     import dcpu16.emulator.devices.lem1802;
@@ -37,19 +44,19 @@ extern (C) int UIAppMain(string[] args)
         comp.cpu.step;
     }
 
-    import dlangui.graphics.images;
+    cdbuf.fill(123);
 
-    uint[PIXELS_NUM] frame;
     size_t idx;
     disp.forEachPixel(
         (PaletteColor c)
         {
-            frame[idx] = makeRGBA(
-                    c.r * 17,
-                    c.g * 17,
-                    c.b * 17,
-                    0
-                );
+            //~ frame[idx] = makeRGBA(44,44,44,30);
+            //~ frame[idx] = makeRGBA(
+                    //~ c.r * 17,
+                    //~ c.g * 17,
+                    //~ c.b * 17,
+                    //~ 0
+                //~ );
             idx++;
         }
     );
@@ -59,4 +66,52 @@ extern (C) int UIAppMain(string[] args)
 
     // run message loop
     return Platform.instance.enterMessageLoop();
+}
+
+alias RGBA = uint;
+alias RGBAframe = uint[PIXELS_NUM];
+
+import dcpu16.emulator.devices.lem1802;
+
+class EmulatorScreenWidget : ImageWidget
+{
+    private ColorDrawBuf cdbuf;
+
+    this(string id, ColorDrawBuf db)
+    {
+        super(id);
+        minWidth = 256;
+        minHeight = 128;
+
+        cdbuf = db;
+        Ref!DrawBuf r = cdbuf;
+        drawable = new ImageDrawable(r);
+    }
+
+    override void onDraw(DrawBuf buf)
+    {
+        if(visibility != Visibility.Visible)
+            return;
+
+        super.onDraw(buf);
+
+        Rect rc = _pos;
+        applyMargins(rc);
+
+        //~ auto saver = ClipRectSaver(buf, rc, alpha);
+        applyPadding(rc);
+
+        DrawableRef img = drawable;
+
+        if (!img.isNull)
+        {
+            //~ auto sz = Point(showW, showH);
+            //~ if (fitImage)
+                //~ sz = imgSizeScaled(rc.width, rc.height);
+
+            //~ applyAlign(rc, sz, Align.HCenter, valign);
+            uint st = state;
+            img.drawTo(buf, rc, st);
+        }
+    }
 }
