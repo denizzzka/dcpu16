@@ -5,9 +5,9 @@ import dcpu16.emulator;
 
 enum CHAR_SIZE_X = 4;
 enum CHAR_SIZE_Y = 8;
-enum CHARS_X_RESOLUTION = 32;
-enum CHARS_Y_RESOLUTION = 12;
-enum PIXELS_NUM = CHARS_X_RESOLUTION * CHARS_Y_RESOLUTION * CHAR_SIZE_X * CHAR_SIZE_Y;
+enum X_RESOLUTION = 32;
+enum Y_RESOLUTION = 12;
+enum PIXELS_NUM = X_RESOLUTION * Y_RESOLUTION * CHAR_SIZE_X * CHAR_SIZE_Y;
 static assert(PIXELS_NUM == 128 * 96);
 
 class LEM1802 : IDevice
@@ -82,7 +82,7 @@ class LEM1802 : IDevice
 
     const(Symbol) getSymbol(uint x, uint y) const
     {
-        return getSymbol(x + y * CHARS_X_RESOLUTION);
+        return getSymbol(x + y * X_RESOLUTION);
     }
 
     bool getPixel(uint x, uint y) const
@@ -167,9 +167,9 @@ class LEM1802 : IDevice
         RGB[PIXELS_NUM] ret;
         size_t currPixel;
 
-        for(ubyte y = 0; y < CHARS_Y_RESOLUTION * CHAR_SIZE_Y; y++)
+        for(ubyte y = 0; y < Y_RESOLUTION * CHAR_SIZE_Y; y++)
         {
-            for(ubyte x = 0; x < CHARS_X_RESOLUTION * CHAR_SIZE_X; x++)
+            for(ubyte x = 0; x < X_RESOLUTION * CHAR_SIZE_X; x++)
             {
                 const s = getSymbol(x / CHAR_SIZE_X, y / CHAR_SIZE_Y);
                 const bitmap = getSymbolBitmap(s.character);
