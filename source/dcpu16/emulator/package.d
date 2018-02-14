@@ -57,12 +57,12 @@ class Computer
         mem[0 .. from.length] = from;
     }
 
-    string memDump() const
+    string memDump(ushort from) const
     {
         string ret;
 
-        for(auto i = 0; i < 16; i++)
-            ret ~= format("%04x ", mem[i]);
+        foreach(w; mem[from .. from+16])
+            ret ~= format("%04x ", w);
 
         return ret;
     }
@@ -72,7 +72,7 @@ class Computer
         return format("Current instruction: %s\n%s\nMemory: %s\n",
                 cpu.getCurrInstruction.toString,
                 cpu.regs.toString,
-                memDump
+                memDump(0)
             );
     }
 }
