@@ -141,14 +141,14 @@ pure struct CPU
             case SHR: r = b >>> a; ex = ((b<<16)>>>a) & 0xffff; break;
             case ASR: r = cast(short)b >> a; ex = ((b<<16)>>>a) & 0xffff; break;
             case SHL: r = b << a; ex = ((b<<a)>>>16) & 0xffff; break;
-            case IFB: if(!((b & a) != 0)) pc++; return;
-            case IFC: if(!((b & a) == 0)) pc++; return;
-            case IFE: if(!(b == a)) pc++; return;
-            case IFN: if(!(b != a)) pc++; return;
-            case IFG: if(!(b > a)) pc++; return;
-            case IFA: if(!(cast(short)b > cast(short)a)) pc++; return;
-            case IFL: if(!(b < a)) pc++; return;
-            case IFU: if(!(cast(short)b < cast(short)a)) pc++; return;
+            case IFB: if(!((b & a) != 0)) conditionalSkip; return;
+            case IFC: if(!((b & a) == 0)) conditionalSkip; return;
+            case IFE: if(!(b == a)) conditionalSkip; return;
+            case IFN: if(!(b != a)) conditionalSkip; return;
+            case IFG: if(!(b > a)) conditionalSkip; return;
+            case IFA: if(!(cast(short)b > cast(short)a)) conditionalSkip; return;
+            case IFL: if(!(b < a)) conditionalSkip; return;
+            case IFU: if(!(cast(short)b < cast(short)a)) conditionalSkip; return;
             case ADX: r = b + a + ex; ex = (r >>> 16) ? 1 : 0; break;
             case SBX: r = b - a + ex; auto under = cast(ushort) r >> 16; ex = under ? 0xffff : 0; break;
             case STI: r = b; i++; j++; break;
@@ -163,6 +163,26 @@ pure struct CPU
 
         if(ins.b < 0x1f) // operand is not literal value
             *b_ptr = cast(ushort) r;
+    }
+
+    private void conditionalSkip() pure
+    {
+        // Next instruction
+        auto i = Instruction(mem[regs.pc]);
+
+        regs.pc++;
+
+        // Add PC for each "next word" operand
+        if(is5bitNextWordOperand(i.a)) regs.pc++;
+        if(is5bitNextWordOperand(i.b)) regs.pc++;
+    }
+
+    private static bool is5bitNextWordOperand(ushort o) pure
+    {
+        return
+            o == 0x1e || // [next word]
+            o == 0x1f || // next word (literal)
+            (o >= 0x10 && o <= 0x17); // [register + next word]
     }
 
     private void performSpecialInstruction(ref Instruction ins) pure
@@ -225,6 +245,7 @@ pure struct CPU
         return &regs.asArr[operand];
     }
 
+    // FIXME: remove isA, it isn't need here
     private ushort* decodeOperand(ref ushort operand, bool isA) pure
     {
         enforce(operand <= 0x3f, "Unknown operand");
