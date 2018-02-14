@@ -33,10 +33,10 @@ extern (C) int UIAppMain(string[] args)
     enum blob = import("test.bin");
     comp.load(cast(ubyte[]) blob);
 
-    foreach(_; 0 .. 4000)
+    foreach(_; 0 .. 40000)
     {
-        import std.stdio;
-        comp.machineState.writeln;
+        //~ import std.stdio;
+        //~ comp.machineState.writeln;
         comp.cpu.step;
     }
 

@@ -11,8 +11,8 @@ unittest
 
     foreach(_; 0 .. 4000)
     {
-        import std.stdio;
-        comp.machineState.writeln;
+        //~ import std.stdio;
+        //~ comp.machineState.writeln;
         comp.cpu.step;
     }
 }
