@@ -34,20 +34,11 @@ class Computer
         cpu.reset();
     }
 
-    void load (string filename)
-    {
-        import std.file;
-
-        ubyte[] d = cast(ubyte[]) read(filename);
-
-        load(d);
-    }
-
-    void load(ubyte[] from) pure
+    void load(in ubyte[] from) pure
     {
         import std.bitmanip;
 
-        enforce(from.length <= Memory.sizeof);
+        enforce(from.length * 2 <= mem.length);
         enforce(from.length % 2 == 0);
 
         const len = from.length / ushort.sizeof;

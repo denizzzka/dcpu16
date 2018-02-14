@@ -1,0 +1,394 @@
+; Emulator Test Code
+
+    JSR init_devices
+    
+    IFE [keyboard_index], -1
+        SET PC, nokeyboard
+    
+    SET J, 0
+    
+    SET A, 0
+    SET B, 0
+    SET C, startup_text
+    JSR prints
+    JSR waitkey
+    JSR clear_screen
+    
+    ; LEM 1802 TEST    
+lem1802_dump_font_test:             ; LEM1802 Font Dump Test
+    JSR clear_screen
+    JSR write_lem1802_header
+    SET A, 0
+    SET B, 2
+    SET C, lem1802_dump_font_text
+    JSR prints
+    
+    SET A, 4
+    SET B, actual_font
+    HWI [screen_index] ; dump font
+    SET A, default_font
+    SET B, actual_font
+    SET C, 0xF
+    JSR compare_memory
+    ADD J, 1
+    
+lem1802_dump_palette_test:          ; LEM1802 Palette Dump Test
+    JSR clear_screen
+    JSR write_lem1802_header
+    SET A, 0
+    SET B, 2
+    SET C, lem1802_dump_palette_text
+    JSR prints
+    
+    SET A, 5
+    SET B, actual_palette
+    HWI [screen_index] ; dump palette
+    SET A, default_palette
+    SET B, actual_palette
+    SET C, 0xF
+    JSR compare_memory
+    ADD J, 1
+    
+lem1802_border:                 ; LEM1802 Border Test
+    JSR write_lem1802_header
+    SET A, 0
+    SET B, 1
+    SET C, lem1802_border_text
+    JSR prints
+    
+    SET I, 0
+.loop:
+    SET A, 3
+    SET B, I
+    HWI [screen_index]
+    
+    SET A, 0
+    SET B, 5
+    SET C, I
+    MUL C, 8
+    ADD C, colors
+    JSR prints
+.keyloop:
+    JSR waitkey
+    IFE C, 'y'
+        SET PC, .iterate
+    IFE C, 'n'
+        SET PC, .fail
+    SET PC, .keyloop
+.fail:
+    SET [J + test_results], 0
+.iterate:
+    ADD I, 1
+    IFN I, 16
+        SET PC, .loop
+    SET A, 3
+    SET B, 0
+    HWI [screen_index]
+    ADD J, 1
+    
+lem1802_map_font_test:              ; LEM1802 Font Mapping Test
+    JSR clear_screen
+    JSR write_lem1802_header
+    SET A, 0
+    SET B, 1
+    SET C, lem1802_map_font_text
+    JSR prints
+    
+    SET [default_font + ('*' * 2)], [test_character]
+    SET [default_font + ('*' * 2) + 1], [test_character + 1]
+    
+    SET A, 1
+    SET B, default_font
+    HWI [screen_index]
+    
+    SET [screen_buffer + (32 * 6)], '*' | 0xF000
+
+    JSR determine_success_y_n
+    
+    ; Reset
+    SET A, 1
+    SET B, 0
+    HWI [screen_index]
+    
+    ADD J, 1
+    
+lem1802_map_palette_test:           ; LEM1802 Palette Mapping Test
+    JSR clear_screen
+    JSR write_lem1802_header
+    SET A, 0
+    SET B, 1
+    SET C, lem1802_map_palette_text
+    JSR prints
+    
+    SET [default_palette + 1], 0xF00
+    
+    SET A, 2
+    SET B, default_palette
+    HWI [screen_index]
+    
+    SET A, 0
+    SET B, 6
+    SET C, lem1802_map_palette_test_text
+    SET [text_color], 0x1000
+    JSR prints
+    SET [text_color], 0xF000
+    
+    JSR determine_success_y_n
+    
+    SET A, 1
+    SET B, 0
+    HWI [screen_index]
+    
+    ADD J, 1
+    
+; Display test results
+show_results:
+    JSR clear_screen
+    SET J, 0
+.show_page:
+    SET A, 0
+    SET B, 0
+    SET C, results_text
+    JSR prints
+.loop:
+    ; Display name of test
+    SET A, 0
+    SET B, J
+    ADD B, 1
+    SET C, J
+    MUL C, test_name_length
+    ADD C, test_names
+    JSR prints
+    ; Display pass/fail
+    SET A, B
+    DIV B, 32
+    MOD A, 32
+    SET C, J
+    ADD C, test_results
+    SET C, [C]
+    MUL C, 5
+    ADD C, test_success_text
+    JSR prints
+    ; Iterate
+    ADD J, 1
+    IFE J, test_results_end - test_results
+        SET PC, .keyloop
+    IFN J, 10
+       SET PC, .loop 
+.keyloop:
+    SUB PC, 1
+    
+nokeyboard:
+    SET A, 0
+    SET B, 0
+    SET C, nokeyboard_text
+    JSR prints
+    SUB PC, 1
+
+write_lem1802_header:
+    SET A, 0
+    SET B, 0
+    SET C, lem1802_text
+    JSR prints
+    SET PC, POP
+
+; Compares [A] to [B] with length C and updates test result J
+compare_memory:
+    IFN [A], [B]
+        SET PC, .fail
+    IFE C, 0
+        SET PC, POP
+    ADD A, 1
+    ADD B, 1
+    SUB C, 1
+    SET PC, compare_memory
+.fail:
+    SET [test_results + J], 0
+    SET PC, POP
+    
+determine_success_y_n:
+    JSR waitkey
+    IFE C, 'n'
+        SET PC, .fail
+    IFN C, 'y'
+        SET PC, determine_success_y_n
+    SET PC, POP
+.fail:
+    SET [test_results + J], 0
+    SET PC, POP
+    
+; Text
+startup_text:
+    .dat "DCPU Emulator Test\nPress a key to begin.", 0
+nokeyboard_text:
+    .dat "ERROR:\nNo keyboard detected.\nPlease plug in Generic Keyboard\nID: 0x30cf7406", 0
+lem1802_text:
+    .dat "=========LEM 1802 Tests=========", 0
+lem1802_border_text:
+    .dat "Screen Border Test\nPress Y if the color shown is\naccurate. Press N if it is not.", 0
+lem1802_dump_palette_text:
+    .dat "Testing default palette.\nPlease wait.", 0
+lem1802_dump_font_text:
+    .dat "Testing default font.\nPlease wait.", 0
+lem1802_map_font_text:
+    .dat "Font Map Test\nPress Y if a small cross is\nvisible below. Press N if it is not.", 0
+lem1802_map_palette_text:
+    .dat "Palette Map Test\nPress Y if the text below is\nred. Press N if it is not.", 0
+lem1802_map_palette_test_text:
+    .dat "Hello, world!", 0
+results_text:
+    .dat "Test Results:", 0
+; Default Palette Colors
+colors:
+    .dat "Black  ", 0
+    .dat "Blue   ", 0
+    .dat "D Green", 0
+    .dat "Teal   ", 0
+    .dat "Red    ", 0
+    .dat "Purple ", 0
+    .dat "Orange ", 0
+    .dat "L Gray ", 0
+    .dat "D Gray ", 0
+    .dat "D Blue ", 0
+    .dat "L Green", 0
+    .dat "L Blue ", 0
+    .dat "Red    ", 0
+    .dat "Pink   ", 0
+    .dat "Yellow ", 0
+    .dat "White  ", 0
+    
+; Test Results
+test_results:
+    .dat 1, 1, 1, 1, 1
+test_results_end:
+test_names:
+    .dat "LEM Border:          ", 0
+.equ test_name_length $ - test_names
+    .dat "LEM Default Font:    ", 0
+    .dat "LEM Default Palette: ", 0
+    .dat "LEM Font Map:        ", 0
+    .dat "LEM Palette Map:     ", 0
+test_names_end:
+
+test_success_text:
+    .dat "FAIL", 0
+    .dat "PASS", 0
+
+; Subroutines
+init_devices:
+    ; Get number of devices
+    HWN A
+    SUB A, 1
+    
+    SET PUSH, X
+    SET PUSH, Y
+        JSR .loop
+    SET Y, POP
+    SET X, POP
+    
+    SET PC, POP
+.loop:
+    ; Loop through them all
+    IFE A, -1
+        SET PC, POP
+    SET PUSH, A
+        HWQ A
+        IFE A, 0xf615
+            IFE B, 0x7349
+                SET PC, .init_screen
+        IFE A, 0x7406
+            IFE B, 0x30cf
+                SET PC, .init_keyboard
+    SET A, POP
+.finish:
+    SUB A, 1
+    SET PC, .loop
+.init_screen:
+    SET C, POP
+    SET [screen_index], C
+    SET A, 0
+    SET B, screen_buffer
+    HWI C
+    SET A, C
+    SET PC, .finish
+.init_keyboard:
+    SET [keyboard_index], [SP]
+    SET PC, .finish - 1
+    
+; prints(x, y, text)
+prints:
+    MUL B, 32
+    ADD B, A
+.loop:
+    SET A, [C]
+    IFE A, 0
+        SET PC, POP
+    IFE A, '\n'
+        SET PC, .newline
+    BOR A, [text_color]
+    SET [B + screen_buffer], A
+.iterate:
+    ADD B, 1
+    ADD C, 1
+    SET PC, .loop
+.newline:
+    DIV B, 32
+    MUL B, 32
+    ADD B, 31
+    SET PC, .iterate
+    
+waitkey:
+    SET A, 1
+    HWI [keyboard_index]
+    IFE C, 0
+        SET PC, waitkey + 1
+    SET PC, POP
+
+clear_screen:
+    SET A, SP
+    SET SP, screen_buffer_end
+.loop:
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+        SET PUSH, 0
+    IFN screen_buffer, SP
+        SET PC, .loop
+    SET SP, A
+    SET PC, POP
+    
+; Reserved memory
+screen_buffer:
+    .reserve 32 * 12
+screen_buffer_end:
+keyboard_index:
+    .dat -1
+screen_index:
+    .dat -1
+successful_count:
+    .dat 0
+text_color:
+    .dat 0xF000
+default_palette:
+    .dat 0x000,0x00A,0x0A0,0x0AA,0xA00,0xA0A,0xA50,0xAAA,0x555,0x55F,0x5F5,0x5FF,0xF55,0xF5F,0xFF5,0xFFF
+actual_palette:
+    .reserve 0xF
+default_font:
+    .incpack "font.bin"
+actual_font:
+    .reserve 512
+test_character:
+    .dat 0b00000111_00000010
+    .dat 0b00000000_00000010
