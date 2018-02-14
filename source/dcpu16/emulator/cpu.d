@@ -245,7 +245,6 @@ pure struct CPU
         return &regs.asArr[operand];
     }
 
-    // FIXME: remove isA, it isn't need here
     private ushort* decodeOperand(ref ushort operand, bool isA) pure
     {
         enforce(operand <= 0x3f, "Unknown operand");
@@ -287,7 +286,7 @@ pure struct CPU
                 return &mem[pc++];
 
             default: // literal values
-                enforce(isA, "Wrong B operand");
+                assert(isA, "Bigger than 5 bit b operand");
                 operand -= 0x21;
                 return &operand;
         }
