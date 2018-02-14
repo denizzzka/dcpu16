@@ -159,7 +159,7 @@ class LEM1802 : IDevice
         return ptr[0 .. 2];
     }
 
-    void forEachPixel(void delegate(PaletteColor c) dg) const
+    void forEachPixel(void delegate(ubyte x, ubyte y, PaletteColor c) dg) const
     {
         for(ubyte y = 0; y < Y_RESOLUTION * CHAR_SIZE_Y; y++)
         {
@@ -175,7 +175,7 @@ class LEM1802 : IDevice
                 else
                     c = getColor(s.background);
 
-                dg(c);
+                dg(x, y, c);
             }
         }
     }
@@ -187,7 +187,7 @@ class LEM1802 : IDevice
         size_t currPixel;
 
         forEachPixel(
-            (c)
+            (x, y, c)
             {
                 ret[currPixel] = c.toRGB;
                 currPixel++;

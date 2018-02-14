@@ -42,15 +42,15 @@ extern (C) int UIAppMain(string[] args)
 
     size_t idx;
     disp.forEachPixel(
-        (PaletteColor c)
+        (x, y, c)
         {
-            //~ frame[idx] = makeRGBA(44,44,44,30);
-            //~ frame[idx] = makeRGBA(
-                    //~ c.r * 17,
-                    //~ c.g * 17,
-                    //~ c.b * 17,
-                    //~ 0
-                //~ );
+            auto rgba = makeRGBA(
+                    c.r * 17,
+                    c.g * 17,
+                    c.b * 17,
+                    0
+                );
+            emulScr.cdbuf.drawPixel(x, y, rgba);
             idx++;
         }
     );
@@ -69,7 +69,7 @@ import dcpu16.emulator.devices.lem1802;
 
 class EmulatorScreenWidget : ImageWidget
 {
-    private ColorDrawBuf cdbuf;
+    public ColorDrawBuf cdbuf;
 
     this(string id)
     {
