@@ -11,6 +11,9 @@ class LEM1802 : IDevice
 
     enum CHAR_SIZE_X = 4;
     enum CHAR_SIZE_Y = 8;
+    enum CHARS_X_RESOLUTION = 32;
+    enum CHARS_Y_RESOLUTION = 32;
+    enum PIXELS_NUM = CHARS_X_RESOLUTION * CHARS_Y_RESOLUTION * CHAR_SIZE_X * CHAR_SIZE_Y;
 
     private const(ushort)* screen;
     private const(ushort)* font = defaultFont.ptr;
@@ -78,18 +81,16 @@ class LEM1802 : IDevice
 
     bool getPixel(uint x, uint y) const
     {
-        enum CHARS_X_RESOLUTION = 32;
-
         auto symbolX = x / CHAR_SIZE_X;
         auto symbolY = y / CHAR_SIZE_Y;
 
         auto s = getSymbol(symbolX + symbolY * CHARS_X_RESOLUTION);
-        auto charImgPtr = &font[s.character * 2];
+        auto bitmap = getSymbolBitmap(s.character);
 
         auto relativeX = x % CHAR_SIZE_X;
         auto relativeY = y % CHAR_SIZE_Y;
 
-        return getPixelOfSymbol(charImgPtr[0 .. 2], relativeX, relativeY);
+        return getPixelOfSymbol(bitmap, relativeX, relativeY);
     }
 
     static bool getPixelOfSymbol(ushort[2] symbolBitmap, uint relativeX, uint relativeY) pure
@@ -146,6 +147,39 @@ class LEM1802 : IDevice
             foreach(x; 0 .. 4)
                 assert(pending[y][x] == getPixelOfSymbol(f_img, x, y));
     }
+
+    private ushort[2] getSymbolBitmap(ubyte character) pure const
+    {
+        auto charImgPtr = &font[character * 2];
+
+        return charImgPtr[0 .. 2];
+    }
+
+    RGB[PIXELS_NUM] getRgbFrame() const
+    {
+        RGB[PIXELS_NUM] ret;
+        size_t currPixel;
+
+        for(ushort idx = 0; idx < CHARS_X_RESOLUTION * CHARS_Y_RESOLUTION; idx++)
+        {
+            const s = getSymbol(idx);
+            auto bitmap = getSymbolBitmap(s.character);
+
+            RGB foreground;
+
+            for(ubyte relY = 0; relY < CHAR_SIZE_Y; relY++)
+            {
+                for(ubyte relX = 0; relX < CHAR_SIZE_X; relX++)
+                {
+                    //~ ret[currPixel] = getPixelOfSymbol(bitmap, relX, relY);
+
+                    currPixel++;
+                }
+            }
+        }
+
+        return ret;
+    }
 }
 
 unittest
@@ -199,6 +233,11 @@ enum InterruptActions : ushort
     SET_BORDER_COLOR,
     MEM_DUMP_FONT,
     MEM_DUMP_PALETTE,
+}
+
+struct RGB
+{
+    ubyte r, g, b;
 }
 
 immutable ushort[256] defaultFont =
