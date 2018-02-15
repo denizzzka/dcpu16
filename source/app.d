@@ -6,7 +6,8 @@ import dcpu16.emulator;
 
 extern (C) int UIAppMain(string[] args)
 {
-    Window window = Platform.instance.createWindow("DCPU-16 emulator", null);
+    Window window = Platform.instance.createWindow("DCPU-16 emulator", null, WindowFlag.Resizable | WindowFlag.ExpandSize);
+    window.windowOrContentResizeMode = WindowOrContentResizeMode.resizeWindow;
 
     window.mainWidget = parseML(q{
         VerticalLayout
