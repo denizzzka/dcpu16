@@ -78,7 +78,7 @@ pure struct CPU
         return Instruction(mem[regs.pc]);
     }
 
-    private void executeInstruction(ref Instruction ins) pure
+    private void executeInstruction(ref Instruction ins)
     {
         if(ins.opcode != Opcode.special)
             performBasicInstruction(ins);
@@ -184,7 +184,7 @@ pure struct CPU
             (o & 0b11000) == 0b10000; // [some_register + next word]
     }
 
-    private void performSpecialInstruction(ref Instruction ins) pure
+    private void performSpecialInstruction(ref Instruction ins)
     {
         ushort* a_ptr = decodeOperand(ins.a, true);
         ushort a = *a_ptr;

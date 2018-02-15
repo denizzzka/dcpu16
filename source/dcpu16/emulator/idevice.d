@@ -7,5 +7,5 @@ interface IDevice
     uint id() const pure;
     ushort ver() const pure;
     uint manufacturer() const pure;
-    void handleHardwareInterrupt(Computer) pure;
+    void handleHardwareInterrupt(Computer);
 }
