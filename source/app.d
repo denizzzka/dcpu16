@@ -82,11 +82,6 @@ class EmulatorScreenWidget : ImageWidget
         super(id);
 
         cdbuf = new ColorDrawBuf(X_PIXELS, Y_PIXELS);
-        cdbuf.fill(123);
-
-        Ref!DrawBuf r = cdbuf ;
-        drawable = new ImageDrawable(r);
-
         comp = c;
         display = d;
     }
@@ -114,7 +109,7 @@ class EmulatorScreenWidget : ImageWidget
             import dlangui.platforms.sdl.sdlapp;
 
             invalidate();
-            (cast(SDLWindow)window).redraw();
+            //~ (cast(SDLWindow)window).redraw();
 
             import std.stdio;
             writeln("screenDrawTimer");
@@ -150,9 +145,12 @@ class EmulatorScreenWidget : ImageWidget
 
         placeFrameToBuf();
 
-        super.onDraw(buf);
+        auto srcRect = Rect(0, 0, cdbuf.width, cdbuf.height);
+        buf.drawRescaled(pos, cdbuf, srcRect);
+    }
 
-        if (!drawable.isNull)
-            drawable.drawTo(buf, _pos, state);
+    override void measure(int parentWidth, int parentHeight)
+    {
+        measuredContent(parentWidth, parentHeight, 640, 480);
     }
 }
