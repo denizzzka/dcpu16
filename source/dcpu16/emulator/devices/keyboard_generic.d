@@ -87,10 +87,10 @@ unittest
 
     foreach(_; 0 .. 4000)
     {
-        import std.stdio;
-        comp.machineState.writeln;
-        comp.memDump(0x9000).writeln;
-        comp.memDump(0x9010).writeln;
+        //~ import std.stdio;
+        //~ comp.machineState.writeln;
+        //~ comp.memDump(0x9000).writeln;
+        //~ comp.memDump(0x9010).writeln;
         comp.cpu.step;
     }
 }

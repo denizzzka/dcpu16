@@ -1,4 +1,6 @@
 import dlangui;
+import dlangui.dialogs.filedlg;
+import dlangui.dialogs.dialog;
 
 mixin APP_ENTRY_POINT;
 
@@ -18,18 +20,21 @@ extern (C) int UIAppMain(string[] args)
                 Button { id: STEP; text: "Step" }
                 Button { id: PAUSE; text: "Pause" }
                 Button { id: RESET_CPU; text: "Reset CPU" }
-                Button { id: REDRAW; text: "Update videobuffer" }
+                Button { id: LOAD_FILE; text: "Load dump..." }
             }
         }
     });
 
 
     import dcpu16.emulator.devices.lem1802;
+    import dcpu16.emulator.devices.keyboard;
     import std.stdio;
 
     auto comp = new Computer;
     auto disp = new LEM1802(comp);
+    auto kbd = new Keyboard((ubyte){ return false; });
     comp.attachDevice = disp;
+    comp.attachDevice = kbd;
 
     auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN0", comp, disp);
     window.mainWidget.insertChild(emulScr, 1);
@@ -51,8 +56,23 @@ extern (C) int UIAppMain(string[] args)
             return true;
         });
 
-    window.mainWidget.childById("REDRAW").addOnClickListener((Widget) {
-            emulScr.placeFrameToBuf;
+    window.mainWidget.childById("LOAD_FILE").addOnClickListener((Widget) {
+            UIString caption;
+            caption = "FILEDLG"d;
+            FileDialog dlg = new FileDialog(caption, window);
+            string filename;
+
+            dlg.dialogResult = delegate(Dialog dlg, const Action result)
+            {
+                if (result.id == ACTION_OPEN.id)
+                {
+                    filename = result.stringParam;
+                    emulScr.loadBinaryFile(filename);
+                }
+            };
+
+            dlg.show();
+
             return true;
         });
 
@@ -159,5 +179,13 @@ class EmulatorScreenWidget : ImageWidget
     override void measure(int parentWidth, int parentHeight)
     {
         measuredContent(parentWidth, parentHeight, 640, 480);
+    }
+
+    void loadBinaryFile(string filename)
+    {
+        import std.file;
+
+        ubyte[] blob = cast(ubyte[]) read(filename);
+        comp.load(blob);
     }
 }
