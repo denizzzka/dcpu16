@@ -173,11 +173,11 @@ pure struct CPU
         regs.pc++;
 
         // Add PC for each "next word" operand
-        if(is5bitNextWordOperand(i.a)) regs.pc++;
-        if(is5bitNextWordOperand(i.b)) regs.pc++;
+        if(is5bitNextWordOperand(cast(ubyte) i.a)) regs.pc++;
+        if(is5bitNextWordOperand(cast(ubyte) i.b)) regs.pc++;
     }
 
-    private static bool is5bitNextWordOperand(ushort o) pure
+    private static bool is5bitNextWordOperand(ubyte o) pure
     {
         return
             (o & 0b11110) == 0b11110 || // [next word] or next word (literal)
