@@ -58,15 +58,16 @@ class Keyboard : IDevice
     void keyPressed(ubyte ascii_or_enum_Key)
     {
         assert(ascii_or_enum_Key != 0);
-        // TODO: more checks
-
-        static ushort mapIdx = 0x9000;
+        // TODO: add more checks
 
         // A 16-word buffer [0x9000 to 0x900e] holds the most recently input characters in a ring buffer, one word per character.
         if(enableMemMapping)
         {
+            static ushort mapIdx = 0x9000;
+
             comp.mem[mapIdx] = ascii_or_enum_Key;
             mapIdx++;
+
             if(mapIdx > 0x900e)
                 mapIdx = 0x9000;
         }
