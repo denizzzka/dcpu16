@@ -109,7 +109,7 @@ extern (C) int UIAppMain(string[] args)
     if(args.length <= 1)
         comp.load(scrFill);
     else
-        emulScr.loadBinaryFile(args[1]);
+        emulScr.loadBinaryFile(args[1], true);
 
     emulScr.startClocking();
 
@@ -217,11 +217,11 @@ class EmulatorScreenWidget : ImageWidget
         measuredContent(parentWidth, parentHeight, 640, 480);
     }
 
-    void loadBinaryFile(string filename)
+    void loadBinaryFile(string filename, bool wrongEndianness = false)
     {
         import std.file;
 
         ubyte[] blob = cast(ubyte[]) read(filename);
-        comp.load(blob);
+        comp.load(blob, wrongEndianness);
     }
 }
