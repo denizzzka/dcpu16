@@ -73,6 +73,7 @@ extern (C) int UIAppMain(string[] args)
                     spdInd = window.mainWidget.childById("SPEED_INDICATOR");
                 import std.conv: to;
                 spdInd.text = source.position.to!dstring;
+                emulScr.setCPUFreq(source.position);
             }
 
             return true;
@@ -136,9 +137,17 @@ class EmulatorScreenWidget : ImageWidget
         display = d;
     }
 
+    void setCPUFreq(uint Hz = 100)
+    {
+        assert(Hz > 0);
+
+        auto mills = 1000 / Hz;
+        clockTimer = setTimer(mills);
+    }
+
     void startClocking()
     {
-        clockTimer = setTimer(10);
+        setCPUFreq(100);
         screenDrawTimer = setTimer(1000);
         blinkingTimer = setTimer(800);
     }
