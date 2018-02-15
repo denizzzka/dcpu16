@@ -3,8 +3,6 @@ module dcpu16.emulator.devices.keyboard;
 import dcpu16.emulator.idevice;
 import dcpu16.emulator;
 
-alias ThisKeyIsPressed = bool delegate(ubyte ascii_or_enum_Key);
-
 class Keyboard : IDevice
 {
     uint id() const pure { return 0x30cf7406; };
@@ -15,11 +13,14 @@ class Keyboard : IDevice
     private ubyte[] buf;
     private ubyte readIdx;
     private ubyte writeIdx;
-    private ThisKeyIsPressed keyPressed;
+    private CheckKeyIsPressed checkKeyPressed;
+    private bool enableMemMapping;
 
-    this(ThisKeyIsPressed dg, size_t keyBufferLength = 8)
+    alias CheckKeyIsPressed = bool delegate(ubyte ascii_or_enum_Key);
+
+    this(CheckKeyIsPressed dg, bool enable0x9000Mapping = true, size_t keyBufferLength = 8)
     {
-        keyPressed = dg;
+        enableMemMapping = enable0x9000Mapping;
         buf.length = keyBufferLength;
     }
 
@@ -42,18 +43,38 @@ class Keyboard : IDevice
             case CHECK_KEY:
                 ubyte b = comp.cpu.regs.B & ubyte.max;
                 if(b != comp.cpu.regs.B) return;
-                comp.cpu.regs.c = keyPressed(b) ? 1 : 0;
+                comp.cpu.regs.c = checkKeyPressed(b) ? 1 : 0;
                 return;
+
+            case SET_INT:
+                assert(false);
 
             default:
                 break;
+        }
+    }
+
+    /// ASCII code or enum Key
+    void keyPressed(ubyte ascii_or_enum_Key)
+    {
+        assert(ascii_or_enum_Key != 0);
+        // TODO: more checks
+
+        static ushort mapIdx = 0x9000;
+
+        // A 16-word buffer [0x9000 to 0x900e] holds the most recently input characters in a ring buffer, one word per character.
+        if(enableMemMapping)
+        {
+            comp.mem[mapIdx] = ascii_or_enum_Key;
+            mapIdx++;
+            if(mapIdx > 0x900e)
+                mapIdx = 0x9000;
         }
     }
 }
 
 unittest
 {
-    // A 16-word buffer [0x9000 to 0x900e] holds the most recently input characters in a ring buffer, one word per character.
     // 0x9010 holds end of buffer
     ushort[] createRingBuff= [
             0x7f01, 0x0000, 0x7f81, 0x0004, 0x7821, 0x9010, 0x4401, 0x9000,
