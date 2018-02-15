@@ -180,9 +180,8 @@ pure struct CPU
     private static bool is5bitNextWordOperand(ushort o) pure
     {
         return
-            o == 0x1e || // [next word]
-            o == 0x1f || // next word (literal)
-            (o >= 0x10 && o <= 0x17); // [register + next word]
+            (o & 0b11110) == 0b11110 || // [next word] or next word (literal)
+            (o & 0b11000) == 0b10000; // [some_register + next word]
     }
 
     private void performSpecialInstruction(ref Instruction ins) pure
