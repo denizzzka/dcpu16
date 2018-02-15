@@ -100,12 +100,16 @@ extern (C) int UIAppMain(string[] args)
             return true;
         });
 
-    ushort[] scrFill =
+    immutable ushort[] scrFill =
     [
         0x7c01, 0xf000, 0x7c21, 0x8000, 0x0121, 0x8802, 0x8822, 0x7c32,
         0x8180, 0x7f81, 0x000d, 0x7f81, 0x0004, 0x7f81, 0x000d
     ];
-    comp.load(scrFill);
+
+    if(args.length == 0)
+        comp.load(scrFill);
+    else
+        emulScr.loadBinaryFile(args[1]);
 
     emulScr.startClocking();
 

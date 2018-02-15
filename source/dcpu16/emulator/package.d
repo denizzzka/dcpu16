@@ -50,7 +50,7 @@ class Computer
         }
     }
 
-    void load(ushort[] from) pure
+    void load(in ushort[] from) pure
     {
         assert(from.length <= mem.length);
 
