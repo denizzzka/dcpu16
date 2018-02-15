@@ -152,23 +152,7 @@ class EmulatorScreenWidget : ImageWidget
 
         super.onDraw(buf);
 
-        Rect rc = _pos;
-        applyMargins(rc);
-
-        //~ auto saver = ClipRectSaver(buf, rc, alpha);
-        applyPadding(rc);
-
-        DrawableRef img = drawable;
-
-        if (!img.isNull)
-        {
-            //~ auto sz = Point(showW, showH);
-            //~ if (fitImage)
-                //~ sz = imgSizeScaled(rc.width, rc.height);
-
-            //~ applyAlign(rc, sz, Align.HCenter, valign);
-            uint st = state;
-            img.drawTo(buf, rc, st);
-        }
+        if (!drawable.isNull)
+            drawable.drawTo(buf, _pos, state);
     }
 }
