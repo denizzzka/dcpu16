@@ -17,6 +17,14 @@ extern (C) int UIAppMain(string[] args)
             TextWidget { text: "DCPU-16 emulator"; fontSize: 150%; fontWeight: 800 }
 
             HorizontalLayout {
+                GroupBox { id: EMUL_SCREEN_GRP }
+                VerticalLayout {
+                    TextWidget { id: SPEED_INDICATOR; text: "<speed>"; fontSize: 100%; fontWeight: 800 }
+                    SliderWidget { id: CPU_SPEED }
+                }
+            }
+
+            HorizontalLayout {
                 Button { id: STEP; text: "Step" }
                 Button { id: PAUSE; text: "Pause" }
                 Button { id: RESET_CPU; text: "Reset CPU" }
@@ -36,8 +44,8 @@ extern (C) int UIAppMain(string[] args)
     comp.attachDevice = disp;
     comp.attachDevice = kbd;
 
-    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN0", comp, disp);
-    window.mainWidget.insertChild(emulScr, 1);
+    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp);
+    window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
 
     window.mainWidget.childById("PAUSE").addOnClickListener((Widget) {
             emulScr.isPaused = !emulScr.isPaused;
@@ -55,6 +63,20 @@ extern (C) int UIAppMain(string[] args)
             comp.machineState.writeln;
             return true;
         });
+
+    auto sldr = cast(SliderWidget) window.mainWidget.childById("CPU_SPEED");
+    sldr.scrollEvent = delegate(AbstractSlider source, ScrollEvent event) {
+            if (event.action == ScrollAction.SliderMoved)
+            {
+                static Widget spdInd;
+                if(!spdInd)
+                    spdInd = window.mainWidget.childById("SPEED_INDICATOR");
+                import std.conv: to;
+                spdInd.text = source.position.to!dstring;
+            }
+
+            return true;
+        };
 
     window.mainWidget.childById("LOAD_FILE").addOnClickListener((Widget) {
             UIString caption;
