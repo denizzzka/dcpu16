@@ -6,7 +6,8 @@ import dcpu16.emulator;
 
 extern (C) int UIAppMain(string[] args)
 {
-    Window window = Platform.instance.createWindow("DCPU-16 emulator", null);
+    Window window = Platform.instance.createWindow("DCPU-16 emulator", null, WindowFlag.Resizable | WindowFlag.ExpandSize);
+    window.windowOrContentResizeMode = WindowOrContentResizeMode.resizeWindow;
 
     window.mainWidget = parseML(q{
         VerticalLayout
@@ -17,6 +18,7 @@ extern (C) int UIAppMain(string[] args)
                 Button { id: STEP; text: "Step" }
                 Button { id: PAUSE; text: "Pause" }
                 Button { id: RESET_CPU; text: "Reset CPU" }
+                Button { id: REDRAW; text: "Update videobuffer" }
             }
         }
     });
@@ -49,6 +51,11 @@ extern (C) int UIAppMain(string[] args)
             return true;
         });
 
+    window.mainWidget.childById("REDRAW").addOnClickListener((Widget) {
+            emulScr.placeFrameToBuf;
+            return true;
+        });
+
     ushort[] scrFill =
     [
         0x7c01, 0xf000, 0x7c21, 0x8000, 0x0121, 0x8802, 0x8822, 0x7c32,
@@ -76,25 +83,22 @@ class EmulatorScreenWidget : ImageWidget
 
     private ulong clockTimer;
     private ulong screenDrawTimer;
+    private ulong blinkingTimer;
 
     this(string id, Computer c, LEM1802 d)
     {
         super(id);
 
         cdbuf = new ColorDrawBuf(X_PIXELS, Y_PIXELS);
-        cdbuf.fill(123);
-
-        Ref!DrawBuf r = cdbuf ;
-        drawable = new ImageDrawable(r);
-
         comp = c;
         display = d;
     }
 
     void startClocking()
     {
-        clockTimer = setTimer(100);
+        clockTimer = setTimer(10);
         screenDrawTimer = setTimer(1000);
+        blinkingTimer = setTimer(800);
     }
 
     override bool onTimer(ulong id)
@@ -109,15 +113,16 @@ class EmulatorScreenWidget : ImageWidget
                 comp.machineState.writeln;
             }
         }
-        else if(screenDrawTimer)
+        else if(id == screenDrawTimer)
         {
             import dlangui.platforms.sdl.sdlapp;
 
-            invalidate();
-            (cast(SDLWindow)window).redraw();
-
-            import std.stdio;
-            writeln("screenDrawTimer");
+            //~ invalidate();
+            //~ (cast(SDLWindow)window).redraw();
+        }
+        else if(id == blinkingTimer)
+        {
+            display.switchBlink();
         }
 
         return true;
@@ -128,15 +133,12 @@ class EmulatorScreenWidget : ImageWidget
         display.forEachPixel(
             (x, y, c)
             {
-                //~ auto rgba = makeRGBA(
-                        //~ c.r * 17,
-                        //~ c.g * 17,
-                        //~ c.b * 17,
-                        //~ 0
-                    //~ );
-
-                auto rgba = x % 2 ? 45 : 99;
-                rgba += y % 2 ? 45 : 99;
+                auto rgba = makeRGBA(
+                        c.r * 17,
+                        c.g * 17,
+                        c.b * 17,
+                        0
+                    );
 
                 cdbuf.drawPixel(x, y, rgba);
             }
@@ -145,14 +147,17 @@ class EmulatorScreenWidget : ImageWidget
 
     override void onDraw(DrawBuf buf)
     {
-        if(visibility != Visibility.Visible)
+        if(!visible)
             return;
 
         placeFrameToBuf();
 
-        super.onDraw(buf);
+        auto srcRect = Rect(0, 0, cdbuf.width, cdbuf.height);
+        buf.drawRescaled(pos, cdbuf, srcRect);
+    }
 
-        if (!drawable.isNull)
-            drawable.drawTo(buf, _pos, state);
+    override void measure(int parentWidth, int parentHeight)
+    {
+        measuredContent(parentWidth, parentHeight, 640, 480);
     }
 }

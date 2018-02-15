@@ -22,6 +22,7 @@ class LEM1802 : IDevice
     private const(ushort)* font = defaultFont.ptr;
     private const(ushort)* palette = defaultPalette.ptr;
     private ubyte borderColor;
+    private bool isBlinkingVisible = true;
 
     bool isDisconnected() const { return screen is null; }
 
@@ -172,7 +173,9 @@ class LEM1802 : IDevice
 
                 PaletteColor c;
 
-                if(getPixel(x, y))
+                bool visible = isBlinkingVisible | !s.blinking;
+
+                if(visible && getPixel(x, y))
                     c = getColor(s.foreground);
                 else
                     c = getColor(s.background);
@@ -206,6 +209,17 @@ class LEM1802 : IDevice
         ushort c = palette[paletteIndex];
 
         return PaletteColor(c);
+    }
+
+    /**
+     * Turn switch state of blinking symbols
+     *
+     * Recommended calling interval:
+     * The Spectrum's 'FLASH' effect: every 16 frames (50 fps), the ink and paper of all flashing bytes is swapped
+    */
+    void switchBlink()
+    {
+        isBlinkingVisible = !isBlinkingVisible;
     }
 }
 
