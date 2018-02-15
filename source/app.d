@@ -106,7 +106,7 @@ extern (C) int UIAppMain(string[] args)
         0x8180, 0x7f81, 0x000d, 0x7f81, 0x0004, 0x7f81, 0x000d
     ];
 
-    if(args.length > 1)
+    if(args.length < 1)
         comp.load(scrFill);
     else
         emulScr.loadBinaryFile(args[1]);
