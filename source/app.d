@@ -161,7 +161,7 @@ class EmulatorScreenWidget : ImageWidget
             if(!isPaused)
             {
                 comp.cpu.step;
-                comp.machineState.writeln;
+                //~ comp.machineState.writeln;
             }
         }
         else if(id == screenDrawTimer)
