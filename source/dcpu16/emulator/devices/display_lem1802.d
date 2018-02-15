@@ -16,7 +16,7 @@ class LEM1802 : IDevice
 {
     uint id() const pure { return 0x7349f615; };
     uint manufacturer() const pure { return 0x1c6c8b36; };
-    ushort ver() const pure { return 0x1802 ; };
+    ushort ver() const pure { return 0x1802; };
 
     private const(ushort)* screen;
     private const(ushort)* font = defaultFont.ptr;
