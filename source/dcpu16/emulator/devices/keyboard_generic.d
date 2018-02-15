@@ -59,6 +59,18 @@ unittest
             0x7f01, 0x0000, 0x7f81, 0x0004, 0x7821, 0x9010, 0x4401, 0x9000,
             0x8621, 0x9000, 0x8822, 0xc428, 0x07c1, 0x9010, 0x6381
         ];
+
+    auto comp = new Computer();
+    comp.load(createRingBuff);
+
+    foreach(_; 0 .. 4000)
+    {
+        import std.stdio;
+        comp.machineState.writeln;
+        comp.memDump(0x9000).writeln;
+        comp.memDump(0x9010).writeln;
+        comp.cpu.step;
+    }
 }
 
 enum InterruptActions : ushort
