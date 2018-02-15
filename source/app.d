@@ -18,6 +18,7 @@ extern (C) int UIAppMain(string[] args)
                 Button { id: STEP; text: "Step" }
                 Button { id: PAUSE; text: "Pause" }
                 Button { id: RESET_CPU; text: "Reset CPU" }
+                Button { id: REDRAW; text: "Update videobuffer" }
             }
         }
     });
@@ -47,6 +48,11 @@ extern (C) int UIAppMain(string[] args)
     window.mainWidget.childById("RESET_CPU").addOnClickListener((Widget) {
             emulScr.comp.cpu.reset;
             comp.machineState.writeln;
+            return true;
+        });
+
+    window.mainWidget.childById("REDRAW").addOnClickListener((Widget) {
+            emulScr.placeFrameToBuf;
             return true;
         });
 
@@ -89,7 +95,7 @@ class EmulatorScreenWidget : ImageWidget
 
     void startClocking()
     {
-        clockTimer = setTimer(100);
+        clockTimer = setTimer(10);
         screenDrawTimer = setTimer(1000);
     }
 
@@ -109,11 +115,8 @@ class EmulatorScreenWidget : ImageWidget
         {
             import dlangui.platforms.sdl.sdlapp;
 
-            invalidate();
+            //~ invalidate();
             //~ (cast(SDLWindow)window).redraw();
-
-            import std.stdio;
-            writeln("screenDrawTimer");
         }
 
         return true;
@@ -124,15 +127,12 @@ class EmulatorScreenWidget : ImageWidget
         display.forEachPixel(
             (x, y, c)
             {
-                //~ auto rgba = makeRGBA(
-                        //~ c.r * 17,
-                        //~ c.g * 17,
-                        //~ c.b * 17,
-                        //~ 0
-                    //~ );
-
-                auto rgba = x % 2 ? 45 : 99;
-                rgba += y % 2 ? 45 : 99;
+                auto rgba = makeRGBA(
+                        c.r * 17,
+                        c.g * 17,
+                        c.b * 17,
+                        0
+                    );
 
                 cdbuf.drawPixel(x, y, rgba);
             }
