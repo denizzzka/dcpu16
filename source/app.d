@@ -140,7 +140,7 @@ class EmulatorScreenWidget : ImageWidget
 
     override void onDraw(DrawBuf buf)
     {
-        if(visibility != Visibility.Visible)
+        if(!visible)
             return;
 
         placeFrameToBuf();
