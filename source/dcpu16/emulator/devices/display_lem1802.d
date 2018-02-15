@@ -173,7 +173,9 @@ class LEM1802 : IDevice
 
                 PaletteColor c;
 
-                if(isBlinkingVisible && getPixel(x, y))
+                bool visible = isBlinkingVisible | !s.blinking;
+
+                if(visible && getPixel(x, y))
                     c = getColor(s.foreground);
                 else
                     c = getColor(s.background);
@@ -217,7 +219,7 @@ class LEM1802 : IDevice
     */
     void switchBlink()
     {
-        isBlinkingVisible != isBlinkingVisible;
+        isBlinkingVisible = !isBlinkingVisible;
     }
 }
 

@@ -83,6 +83,7 @@ class EmulatorScreenWidget : ImageWidget
 
     private ulong clockTimer;
     private ulong screenDrawTimer;
+    private ulong blinkingTimer;
 
     this(string id, Computer c, LEM1802 d)
     {
@@ -97,6 +98,7 @@ class EmulatorScreenWidget : ImageWidget
     {
         clockTimer = setTimer(10);
         screenDrawTimer = setTimer(1000);
+        blinkingTimer = setTimer(800);
     }
 
     override bool onTimer(ulong id)
@@ -111,12 +113,16 @@ class EmulatorScreenWidget : ImageWidget
                 comp.machineState.writeln;
             }
         }
-        else if(screenDrawTimer)
+        else if(id == screenDrawTimer)
         {
             import dlangui.platforms.sdl.sdlapp;
 
             //~ invalidate();
             //~ (cast(SDLWindow)window).redraw();
+        }
+        else if(id == blinkingTimer)
+        {
+            display.switchBlink();
         }
 
         return true;
