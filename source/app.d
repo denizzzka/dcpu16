@@ -26,7 +26,7 @@ extern (C) int UIAppMain(string[] args)
 
             HorizontalLayout {
                 Button { id: STEP; text: "Step" }
-                Button { id: PAUSE; text: "Pause" }
+                Button { id: PAUSE; text: "Run" }
                 Button { id: RESET_CPU; text: "Reset CPU" }
                 Button { id: LOAD_FILE; text: "Load dump..." }
             }
@@ -47,8 +47,9 @@ extern (C) int UIAppMain(string[] args)
     auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp);
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
 
-    window.mainWidget.childById("PAUSE").addOnClickListener((Widget) {
+    window.mainWidget.childById("PAUSE").addOnClickListener((Widget w) {
             emulScr.isPaused = !emulScr.isPaused;
+            w.text = emulScr.isPaused ? "Run" : "Pause";
             return true;
         });
 
