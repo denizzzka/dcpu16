@@ -7,7 +7,7 @@ unittest
     enum blob = import("test.bin");
 
     auto comp = new Computer();
-    comp.load(cast(ubyte[]) blob);
+    comp.load(cast(ubyte[]) blob, false);
 
     foreach(_; 0 .. 4000)
     {
