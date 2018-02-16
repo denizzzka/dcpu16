@@ -93,12 +93,12 @@ pure struct CPU
 
     private void complainWrongOpcode(in Instruction ins) pure
     {
-        throw new Dcpu16Exception("Wrong opcode", ins, computer, __FILE__, __LINE__);
+        throw new Dcpu16Exception("Wrong opcode", computer, __FILE__, __LINE__);
     }
 
     private void complainWrongDeviceNum(in Instruction ins) pure
     {
-        throw new Dcpu16Exception("Wrong device number", ins, computer, __FILE__, __LINE__);
+        throw new Dcpu16Exception("Wrong device number", computer, __FILE__, __LINE__);
     }
 
     private void performBasicInstruction(ref Instruction ins) pure
@@ -108,8 +108,8 @@ pure struct CPU
 
         int r;
 
-        const ushort a = *decodeOperand(ins.a, ins, true);
-        ushort* b_ptr = decodeOperand(ins.b, ins, false);
+        const ushort a = *decodeOperand(ins.a, true);
+        ushort* b_ptr = decodeOperand(ins.b, false);
         const b = *b_ptr;
 
         with(Opcode)
@@ -203,7 +203,7 @@ pure struct CPU
 
     private void performSpecialInstruction(ref Instruction ins)
     {
-        ushort* a_ptr = decodeOperand(ins.a, ins, true);
+        ushort* a_ptr = decodeOperand(ins.a, true);
         ushort a = *a_ptr;
 
         with(SpecialOpcode)
@@ -261,10 +261,10 @@ pure struct CPU
         return &regs.asArr[operand];
     }
 
-    private ushort* decodeOperand(ref ushort operand, in Instruction ins, bool isA) pure
+    private ushort* decodeOperand(ref ushort operand, bool isA) pure
     {
         if(operand > 0x3f)
-            throw new Dcpu16Exception("Unknown operand", ins, computer, __FILE__, __LINE__);
+            throw new Dcpu16Exception("Unknown operand", computer, __FILE__, __LINE__);
 
         with(regs)
         switch(operand)
@@ -474,12 +474,12 @@ pure unittest
 
     i1.b = 0x03;
     i2.b = 0x0b;
-    assert(*cpu.decodeOperand(i1.b, i1, false) == 123, "1");
-    assert(*cpu.decodeOperand(i2.b, i2, false) == 456, "2");
+    assert(*cpu.decodeOperand(i1.b, false) == 123, "1");
+    assert(*cpu.decodeOperand(i2.b, false) == 456, "2");
 
     // literal values:
     i1.a = 0x20;
     i2.a = 0x3f;
-    assert(*cpu.decodeOperand(i1.a, i1, true) == cast(ushort) -1);
-    assert(*cpu.decodeOperand(i2.a, i2, true) == 30);
+    assert(*cpu.decodeOperand(i1.a, true) == cast(ushort) -1);
+    assert(*cpu.decodeOperand(i2.a, true) == 30);
 }

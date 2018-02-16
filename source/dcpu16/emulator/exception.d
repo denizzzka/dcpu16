@@ -9,14 +9,13 @@ class Dcpu16Exception : Exception
 {
     this(
         string msg,
-        Instruction ins,
         Computer comp,
         string file,
         size_t line
     ) pure
     {
         super(
-            format("%s\n%s\n%s", msg, ins.toString, comp.cpu.regsToString),
+            format("%s\n%s\n%s", msg, comp.cpu.getCurrInstruction.toString, comp.cpu.regsToString),
             file,
             line
         );
