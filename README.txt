@@ -5,6 +5,7 @@ DCPU-16 emulator
 
 TODO:
 
+* clocking timings
 * Interrupts
 * GUI
 * Keyboard
