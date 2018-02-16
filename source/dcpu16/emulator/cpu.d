@@ -35,7 +35,7 @@ import std.string: format;
 
 pure struct CPU
 {
-    import std.exception: enforce;
+    import dcpu16.emulator.exception;
 
     Computer computer;
     Registers regs;
@@ -78,9 +78,15 @@ pure struct CPU
             performSpecialInstruction(ins);
     }
 
+    private void complainWrongOpcode(ubyte opcode) pure
+    {
+        throw new Dcpu16Exception("Wrong opcode "~format("%02x", opcode), __FILE__, __LINE__);
+    }
+
     private void performBasicInstruction(ref Instruction ins) pure
     {
-        enforce(ins.opcode <= Opcode.STD, "Wrong opcode");
+        if(ins.opcode <= Opcode.STD)
+            complainWrongOpcode(ins.opcode);
 
         int r;
 
@@ -150,7 +156,7 @@ pure struct CPU
             case unused_0x19:
             case unused_0x1c:
             case unused_0x1d:
-                enforce("Wrong opcode");
+                complainWrongOpcode(ins.opcode);
         }
 
         if(ins.b < 0x1f) // operand is not literal value
@@ -197,7 +203,7 @@ pure struct CPU
             case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
             case HWN: a = cast(ushort) computer.devices.length; return;
             case HWQ:
-                enforce(a < computer.devices.length, "Wrong device number");
+                if(a < computer.devices.length) throw new Dcpu16Exception("HWQ: wrong device number", __FILE__, __LINE__);
                 auto dev = computer.devices[a];
                 A = cast(ushort) dev.id;
                 B = dev.id >>> 16;
@@ -206,12 +212,12 @@ pure struct CPU
                 y = dev.manufacturer >>> 16;
                 return;
             case HWI:
-                enforce(a < computer.devices.length, "Wrong device number");
+                if(a < computer.devices.length) throw new Dcpu16Exception("HWI: wrong device number", __FILE__, __LINE__);
                 computer.devices[a].handleHardwareInterrupt(computer);
                 return;
             case reserved:
             default:
-                enforce(false, "Wrong opcode");
+                complainWrongOpcode(ins.spec_opcode);
         }
 
         if(ins.a < 0x1f) // operand is not literal value
@@ -238,7 +244,7 @@ pure struct CPU
 
     private ushort* decodeOperand(ref ushort operand, bool isA) pure
     {
-        enforce(operand <= 0x3f, "Unknown operand");
+        if(operand <= 0x3f) throw new Dcpu16Exception("Unknown operand", __FILE__, __LINE__);
 
         with(regs)
         switch(operand)
