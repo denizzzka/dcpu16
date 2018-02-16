@@ -16,7 +16,7 @@ class Dcpu16Exception : Exception
     ) pure
     {
         super(
-            format("%s\n%s", msg, ins.toString),
+            format("%s\n%s\n%s", msg, ins.toString, comp.cpu.regsToString),
             file,
             line
         );

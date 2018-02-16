@@ -295,7 +295,7 @@ pure struct CPU
         }
     }
 
-    string regsToString() const
+    string regsToString() const pure
     {
         import std.string;
 
