@@ -83,7 +83,7 @@ pure struct CPU
         return Instruction(mem[regs.PC]);
     }
 
-    private void executeInstruction(ref Instruction ins)
+    private void executeInstruction(in Instruction ins)
     {
         if(ins.opcode != Opcode.special)
             performBasicInstruction(ins);
@@ -101,15 +101,17 @@ pure struct CPU
         throw new Dcpu16Exception("Wrong device number", computer, __FILE__, __LINE__);
     }
 
-    private void performBasicInstruction(ref Instruction ins) pure
+    private void performBasicInstruction(in Instruction ins) pure
     {
         if(ins.opcode > Opcode.STD)
             complainWrongOpcode(ins);
 
         int r;
 
-        const ushort a = *decodeOperand(ins.a, true);
-        ushort* b_ptr = decodeOperand(ins.b, false);
+        ushort mutable = ins.a;
+        const ushort a = *decodeOperand(mutable, true);
+        mutable = ins.b;
+        ushort* b_ptr = decodeOperand(mutable, false);
         const b = *b_ptr;
 
         with(Opcode)
@@ -201,9 +203,10 @@ pure struct CPU
             (o & 0b11000) == 0b10000; // [some_register + next word]
     }
 
-    private void performSpecialInstruction(ref Instruction ins)
+    private void performSpecialInstruction(in Instruction ins)
     {
-        ushort* a_ptr = decodeOperand(ins.a, true);
+        ushort mutable_a = ins.a;
+        ushort* a_ptr = decodeOperand(mutable_a, true);
         ushort a = *a_ptr;
 
         with(SpecialOpcode)
