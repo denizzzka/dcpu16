@@ -80,7 +80,12 @@ pure struct CPU
 
     private void complainWrongOpcode(in Instruction ins) pure
     {
-        throw new Dcpu16Exception("Wrong opcode", ins, __FILE__, __LINE__);
+        throw new Dcpu16Exception("Wrong opcode", ins, computer, __FILE__, __LINE__);
+    }
+
+    private void complainWrongDeviceNum(in Instruction ins) pure
+    {
+        throw new Dcpu16Exception("Wrong device number", ins, computer, __FILE__, __LINE__);
     }
 
     private void performBasicInstruction(ref Instruction ins) pure
@@ -203,7 +208,7 @@ pure struct CPU
             case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
             case HWN: a = cast(ushort) computer.devices.length; return;
             case HWQ:
-                if(a >= computer.devices.length) throw new Dcpu16Exception("Wrong device number", ins, __FILE__, __LINE__);
+                if(a >= computer.devices.length) complainWrongDeviceNum(ins);
                 auto dev = computer.devices[a];
                 A = cast(ushort) dev.id;
                 B = dev.id >>> 16;
@@ -212,7 +217,7 @@ pure struct CPU
                 y = dev.manufacturer >>> 16;
                 return;
             case HWI:
-                if(a >= computer.devices.length) throw new Dcpu16Exception("Wrong device number", ins, __FILE__, __LINE__);
+                if(a >= computer.devices.length) complainWrongDeviceNum(ins);
                 computer.devices[a].handleHardwareInterrupt(computer);
                 return;
             case reserved:
@@ -245,7 +250,7 @@ pure struct CPU
     private ushort* decodeOperand(ref ushort operand, in Instruction ins, bool isA) pure
     {
         if(operand > 0x3f)
-            throw new Dcpu16Exception("Unknown operand", ins, __FILE__, __LINE__);
+            throw new Dcpu16Exception("Unknown operand", ins, computer, __FILE__, __LINE__);
 
         with(regs)
         switch(operand)
