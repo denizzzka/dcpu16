@@ -165,8 +165,16 @@ class EmulatorScreenWidget : ImageWidget
 
             if(!isPaused)
             {
-                comp.cpu.step;
-                //~ comp.machineState.writeln;
+                import dcpu16.emulator.exception;
+
+                try
+                    comp.cpu.step;
+                catch(Dcpu16Exception e)
+                {
+                    e.msg.writeln;
+                    isPaused = true;
+                    comp.cpu.reset;
+                }
             }
         }
         else if(id == screenDrawTimer)
