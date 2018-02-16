@@ -418,32 +418,20 @@ enum SpecialOpcode : ubyte
 
 struct Instruction
 {
-    ushort a; //TODO: rename to operandA
     union
     {
-        ushort b; //TODO: rename to operandB
-        SpecialOpcode spec_opcode;
+        ushort word;
+
+        mixin(bitfields!(
+            ubyte, "opcode",    5,
+            ubyte, "b",         5,
+            ubyte, "a",         6,
+        ));
     }
-    Opcode opcode;
 
-    private this(ushort w0) pure
+    SpecialOpcode spec_opcode() const pure
     {
-        union U
-        {
-            ushort word;
-
-            mixin(bitfields!(
-                ubyte, "opcode",    5,
-                ubyte, "b",         5,
-                ubyte, "a",         6,
-            ));
-        }
-
-        U u = U(w0);
-
-        a = u.a;
-        b = u.b;
-        opcode = cast(Opcode) u.opcode;
+        return cast(SpecialOpcode) b;
     }
 
     string toString() const pure
@@ -472,17 +460,14 @@ pure unittest
     cpu.regs.x = 123;
     comp.mem[123] = 456;
 
-    Instruction i1;
-    Instruction i2;
-
-    i1.b = 0x03;
-    i2.b = 0x0b;
-    assert(*cpu.decodeOperand(i1.b, false) == 123, "1");
-    assert(*cpu.decodeOperand(i2.b, false) == 456, "2");
+    ushort b1 = 0x03;
+    ushort b2 = 0x0b;
+    assert(*cpu.decodeOperand(b1, false) == 123, "1");
+    assert(*cpu.decodeOperand(b2, false) == 456, "2");
 
     // literal values:
-    i1.a = 0x20;
-    i2.a = 0x3f;
-    assert(*cpu.decodeOperand(i1.a, true) == cast(ushort) -1);
-    assert(*cpu.decodeOperand(i2.a, true) == 30);
+    ushort a1 = 0x20;
+    ushort a2 = 0x3f;
+    assert(*cpu.decodeOperand(a1, true) == cast(ushort) -1);
+    assert(*cpu.decodeOperand(a2, true) == 30);
 }
