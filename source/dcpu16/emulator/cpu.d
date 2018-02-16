@@ -219,7 +219,7 @@ pure struct CPU
                 return;
             case reserved:
             default:
-                enforce("Wrong opcode");
+                enforce(false, "Wrong opcode");
         }
 
         if(ins.a < 0x1f) // operand is not literal value
@@ -413,8 +413,18 @@ struct Instruction
     {
         import std.conv: to;
 
-        return format!"opcode=%02x (%s), opA=%02x, opB=%02x"
-            (opcode, opcode.to!string, a, b);
+        if(opcode == 0) // special opcode
+        {
+            return
+                format!"special opcode=%02x (%s), opA=%02x"
+                (spec_opcode, spec_opcode.to!string, a);
+        }
+        else
+        {
+            return
+                format!"opcode=%02x (%s), opA=%02x, opB=%02x"
+                (opcode, opcode.to!string, a, b);
+        }
     }
 }
 
