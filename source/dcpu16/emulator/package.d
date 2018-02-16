@@ -73,7 +73,7 @@ class Computer
     {
         return format("Current instruction: %s\n%s\nMemory: %s\n",
                 cpu.getCurrInstruction.toString,
-                cpu.regs.toString,
+                cpu.regsToString,
                 memDump(0)
             );
     }
