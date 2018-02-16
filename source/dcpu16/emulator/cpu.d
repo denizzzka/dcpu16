@@ -65,7 +65,7 @@ pure struct CPU
         executeInstruction(ins);
     }
 
-    Instruction getCurrInstruction() const
+    Instruction getCurrInstruction() const pure
     {
         return Instruction(mem[regs.pc]);
     }
@@ -78,15 +78,15 @@ pure struct CPU
             performSpecialInstruction(ins);
     }
 
-    private void complainWrongOpcode(ubyte opcode) pure
+    private void complainWrongOpcode(in Instruction ins) pure
     {
-        throw new Dcpu16Exception("Wrong opcode "~format("%02x", opcode), __FILE__, __LINE__);
+        throw new Dcpu16Exception("Wrong opcode", ins, __FILE__, __LINE__);
     }
 
     private void performBasicInstruction(ref Instruction ins) pure
     {
-        if(ins.opcode <= Opcode.STD)
-            complainWrongOpcode(ins.opcode);
+        if(ins.opcode > Opcode.STD)
+            complainWrongOpcode(ins);
 
         int r;
 
@@ -156,7 +156,7 @@ pure struct CPU
             case unused_0x19:
             case unused_0x1c:
             case unused_0x1d:
-                complainWrongOpcode(ins.opcode);
+                complainWrongOpcode(ins);
         }
 
         if(ins.b < 0x1f) // operand is not literal value
@@ -203,7 +203,7 @@ pure struct CPU
             case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
             case HWN: a = cast(ushort) computer.devices.length; return;
             case HWQ:
-                if(a < computer.devices.length) throw new Dcpu16Exception("HWQ: wrong device number", __FILE__, __LINE__);
+                if(a >= computer.devices.length) throw new Dcpu16Exception("Wrong device number", ins, __FILE__, __LINE__);
                 auto dev = computer.devices[a];
                 A = cast(ushort) dev.id;
                 B = dev.id >>> 16;
@@ -212,12 +212,12 @@ pure struct CPU
                 y = dev.manufacturer >>> 16;
                 return;
             case HWI:
-                if(a < computer.devices.length) throw new Dcpu16Exception("HWI: wrong device number", __FILE__, __LINE__);
+                if(a >= computer.devices.length) throw new Dcpu16Exception("Wrong device number", ins, __FILE__, __LINE__);
                 computer.devices[a].handleHardwareInterrupt(computer);
                 return;
             case reserved:
             default:
-                complainWrongOpcode(ins.spec_opcode);
+                complainWrongOpcode(ins);
         }
 
         if(ins.a < 0x1f) // operand is not literal value
@@ -244,7 +244,8 @@ pure struct CPU
 
     private ushort* decodeOperand(ref ushort operand, bool isA) pure
     {
-        if(operand <= 0x3f) throw new Dcpu16Exception("Unknown operand", __FILE__, __LINE__);
+        if(operand > 0x3f)
+            throw new Dcpu16Exception("Unknown operand", getCurrInstruction /*FIXME: wrong value*/, __FILE__, __LINE__);
 
         with(regs)
         switch(operand)
@@ -423,7 +424,7 @@ struct Instruction
         opcode = cast(Opcode) u.opcode;
     }
 
-    string toString() const
+    string toString() const pure
     {
         import std.conv: to;
 
