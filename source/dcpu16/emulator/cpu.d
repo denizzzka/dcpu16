@@ -16,11 +16,23 @@ struct Registers
             ushort z;
             ushort i;
             ushort j;
-            ushort sp; /// stack pointer
-            ushort pc; /// program counter
-            ushort ex; /// extra/excess
-            ushort ia; /// interrupt address
         }
+    }
+
+    ushort sp; /// stack pointer
+    private ushort pc; /// program counter for internal purposes
+    private ushort _pc; /// program counter available for users through getter/setter
+    ushort ex; /// extra/excess
+    ushort ia; /// interrupt address
+
+    /// program counter register
+    ushort PC() const pure @property { return _pc; }
+    /// ditto
+    ushort PC(ushort v) pure @property
+    {
+        _pc = v;
+        pc = v;
+        return _pc;
     }
 
     void reset() pure
@@ -60,14 +72,15 @@ pure struct CPU
 
     void step()
     {
-        auto ins = getCurrInstruction;
+        Instruction ins = getCurrInstruction;
         regs.pc++;
         executeInstruction(ins);
+        regs.PC = regs.pc;
     }
 
     Instruction getCurrInstruction() const pure
     {
-        return Instruction(mem[regs.pc]);
+        return Instruction(mem[regs.PC]);
     }
 
     private void executeInstruction(ref Instruction ins)
@@ -144,14 +157,14 @@ pure struct CPU
             case SHR: r = b >>> a; ex = ((b<<16)>>>a) & 0xffff; break;
             case ASR: r = cast(short)b >> a; ex = ((b<<16)>>>a) & 0xffff; break;
             case SHL: r = b << a; ex = ((b<<a)>>>16) & 0xffff; break;
-            case IFB: if(!((b & a) != 0)) conditionalSkip; return;
-            case IFC: if(!((b & a) == 0)) conditionalSkip; return;
-            case IFE: if(!(b == a)) conditionalSkip; return;
-            case IFN: if(!(b != a)) conditionalSkip; return;
-            case IFG: if(!(b > a)) conditionalSkip; return;
-            case IFA: if(!(cast(short)b > cast(short)a)) conditionalSkip; return;
-            case IFL: if(!(b < a)) conditionalSkip; return;
-            case IFU: if(!(cast(short)b < cast(short)a)) conditionalSkip; return;
+            case IFB: if(!((b & a) != 0)) skip; return;
+            case IFC: if(!((b & a) == 0)) skip; return;
+            case IFE: if(!(b == a)) skip; return;
+            case IFN: if(!(b != a)) skip; return;
+            case IFG: if(!(b > a)) skip; return;
+            case IFA: if(!(cast(short)b > cast(short)a)) skip; return;
+            case IFL: if(!(b < a)) skip; return;
+            case IFU: if(!(cast(short)b < cast(short)a)) skip; return;
             case ADX: r = b + a + ex; ex = (r >>> 16) ? 1 : 0; break;
             case SBX: r = b - a + ex; auto under = cast(ushort) r >> 16; ex = under ? 0xffff : 0; break;
             case STI: r = b; i++; j++; break;
@@ -168,9 +181,10 @@ pure struct CPU
             *b_ptr = cast(ushort) r;
     }
 
-    private void conditionalSkip() pure
+    /// Skip (set pc to) next instruction
+    private void skip() pure
     {
-        // Next instruction
+        /// Next instruction
         auto i = Instruction(mem[regs.pc]);
 
         regs.pc++;
@@ -302,11 +316,11 @@ pure struct CPU
         with(regs)
         {
             return format!
-                "A:%04x  B:%04x  C:%04x  X:%04x  Y:%04x  Z:%04x  I:%04x  J:%04x  SP:%04x  PC:%04x  EX:%04x  IA:%04x\n [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]   [%04x]   [%04x]   [%04x]   [%04x]"
+                "A:%04x  B:%04x  C:%04x  X:%04x  Y:%04x  Z:%04x  I:%04x  J:%04x  SP:%04x  PC:%04x  EX:%04x  IA:%04x iPC:%04x\n [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]   [%04x]   [%04x]   [%04x]   [%04x]   [%04x]"
                 (
-                    A, B, c, x, y, z, i, j, sp, pc, ex, ia,
+                    A, B, c, x, y, z, i, j, sp, PC, ex, ia, pc,
                     mem[A], mem[B], mem[c], mem[x], mem[y], mem[z],
-                    mem[i], mem[j], mem[sp], mem[pc], mem[ex], mem[ia]
+                    mem[i], mem[j], mem[sp], mem[PC], mem[ex], mem[ia], mem[pc]
                 );
         }
     }

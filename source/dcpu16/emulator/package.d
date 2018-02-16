@@ -97,7 +97,7 @@ unittest
         c.cpu.step;
 
     assert(c.cpu.regs.A == 0x19);
-    assert(c.cpu.regs.pc == 0x02);
+    assert(c.cpu.regs.PC == 0x02);
 
     c.reset;
     assert(c.mem[0] == 0);
