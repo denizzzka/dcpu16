@@ -90,8 +90,8 @@ pure struct CPU
 
         int r;
 
-        const ushort a = *decodeOperand(ins.a, true);
-        ushort* b_ptr = decodeOperand(ins.b, false);
+        const ushort a = *decodeOperand(ins.a, ins, true);
+        ushort* b_ptr = decodeOperand(ins.b, ins, false);
         const b = *b_ptr;
 
         with(Opcode)
@@ -184,7 +184,7 @@ pure struct CPU
 
     private void performSpecialInstruction(ref Instruction ins)
     {
-        ushort* a_ptr = decodeOperand(ins.a, true);
+        ushort* a_ptr = decodeOperand(ins.a, ins, true);
         ushort a = *a_ptr;
 
         with(SpecialOpcode)
@@ -242,10 +242,10 @@ pure struct CPU
         return &regs.asArr[operand];
     }
 
-    private ushort* decodeOperand(ref ushort operand, bool isA) pure
+    private ushort* decodeOperand(ref ushort operand, in Instruction ins, bool isA) pure
     {
         if(operand > 0x3f)
-            throw new Dcpu16Exception("Unknown operand", getCurrInstruction /*FIXME: wrong value*/, __FILE__, __LINE__);
+            throw new Dcpu16Exception("Unknown operand", ins, __FILE__, __LINE__);
 
         with(regs)
         switch(operand)
@@ -450,14 +450,17 @@ pure unittest
     cpu.regs.x = 123;
     comp.mem[123] = 456;
 
-    ushort o1 = 0x03;
-    ushort o2 = 0x0b;
-    assert(*cpu.decodeOperand(o1, false) == 123, "1");
-    assert(*cpu.decodeOperand(o2, false) == 456, "2");
+    Instruction i1;
+    Instruction i2;
+
+    i1.b = 0x03;
+    i2.b = 0x0b;
+    assert(*cpu.decodeOperand(i1.b, i1, false) == 123, "1");
+    assert(*cpu.decodeOperand(i2.b, i2, false) == 456, "2");
 
     // literal values:
-    ushort l1 = 0x20;
-    ushort l2 = 0x3f;
-    assert(*cpu.decodeOperand(l1, true) == cast(ushort) -1);
-    assert(*cpu.decodeOperand(l2, true) == 30);
+    i1.a = 0x20;
+    i2.a = 0x3f;
+    assert(*cpu.decodeOperand(i1.a, i1, true) == cast(ushort) -1);
+    assert(*cpu.decodeOperand(i2.a, i2, true) == 30);
 }
