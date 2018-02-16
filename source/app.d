@@ -91,7 +91,7 @@ extern (C) int UIAppMain(string[] args)
                 if (result.id == ACTION_OPEN.id)
                 {
                     filename = result.stringParam;
-                    emulScr.loadBinaryFile(filename);
+                    emulScr.loadBinaryFile(filename, true); // FIXME: endiannes selection
                 }
             };
 
@@ -217,7 +217,7 @@ class EmulatorScreenWidget : ImageWidget
         measuredContent(parentWidth, parentHeight, 640, 480);
     }
 
-    void loadBinaryFile(string filename, bool wrongEndianness = false)
+    void loadBinaryFile(string filename, bool wrongEndianness)
     {
         import std.file;
 

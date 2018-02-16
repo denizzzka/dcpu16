@@ -34,21 +34,21 @@ class Computer
         cpu.reset();
     }
 
-    void load(in ubyte[] from, bool wrongEndianness = false) pure
+    void load(in ubyte[] from, bool wrongEndianness)
     {
         import std.bitmanip;
 
         enforce(from.length * 2 <= mem.length);
         enforce(from.length % 2 == 0);
 
-        const len = from.length / ushort.sizeof;
-
-        for(ushort i = 0; i < len; i+=2)
+        for(ushort i = 0; i < from.length; i+=2)
         {
             ubyte[2] d = from[i .. i+2];
-            mem[i] = wrongEndianness
+            ushort temp = wrongEndianness
                 ? bigEndianToNative!ushort(d)
                 : littleEndianToNative!ushort(d);
+
+            mem[i/2] = temp;
         }
     }
 
