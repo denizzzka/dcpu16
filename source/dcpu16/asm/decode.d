@@ -17,7 +17,7 @@ private string explainRegisterOfOperand(ushort operand)
         case 5: return "Z";
         case 6: return "I";
         case 7: return "J";
-        default: return "unknown_register";
+        default: assert(false);
     }
 }
 
@@ -32,7 +32,7 @@ private string explainOperand(in Memory mem, ref ushort pc, ushort operand, bool
             return explainRegisterOfOperand(operand);
 
         case 0x08: .. case 0x0f: // [register]
-            return "["~explainRegisterOfOperand(operand)~"]";
+            return "["~explainRegisterOfOperand(operand & 7)~"]";
 
         case 0x10: .. case 0x17: // [register + next word]
             return "["~explainRegisterOfOperand(operand & 7)~" + "~mem[pc+1].fmt~"]";
@@ -43,7 +43,7 @@ private string explainOperand(in Memory mem, ref ushort pc, ushort operand, bool
         case 0x19:
             return "PEEK";
 
-        case 0x1a: // PICK n
+        case 0x1a:
             return "PICK "~mem[pc+1].fmt;
 
         case 0x1b:
@@ -56,10 +56,10 @@ private string explainOperand(in Memory mem, ref ushort pc, ushort operand, bool
             return "EX";
 
         case 0x1e: // [next word]
-            return "["~mem[pc++].fmt~"]";
+            return "["~mem[++pc].fmt~"]";
 
         case 0x1f: // next word (literal)
-            return mem[pc++].fmt;
+            return mem[++pc].fmt;
 
         default: // literal values
             assert(isA, "Bigger than 5 bit b operand");
@@ -77,7 +77,7 @@ private string explainBasicInstruction(in Memory mem, ushort pc, in Instruction 
 
     import std.conv: to;
 
-    return format("%s %s, %s", ins.basic_opcode.to!string, a, b);
+    return format("%s %s, %s", ins.basic_opcode.to!string, b, a);
 }
 
 private string explainSpecialInstruction(in Memory mem, ushort pc, in Instruction ins)
@@ -91,7 +91,7 @@ private string explainSpecialInstruction(in Memory mem, ushort pc, in Instructio
 
 private string fmt(T)(T v)
 {
-    return format("%04x", v);
+    return format("%04#x", v);
 }
 
 string explainInstruction(in Memory mem, ushort pc, in Instruction ins)
