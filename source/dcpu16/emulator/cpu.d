@@ -85,7 +85,7 @@ pure struct CPU
 
     private void executeInstruction(in Instruction ins)
     {
-        if(ins.opcode != Opcode.special)
+        if(!ins.isSpecialOpcode)
             performBasicInstruction(ins);
         else
             performSpecialInstruction(ins);
@@ -103,7 +103,7 @@ pure struct CPU
 
     private void performBasicInstruction(in Instruction ins) pure
     {
-        if(ins.opcode > Opcode.STD)
+        if(ins.basic_opcode > Opcode.STD)
             complainWrongOpcode(ins);
 
         int r;
@@ -116,7 +116,7 @@ pure struct CPU
 
         with(Opcode)
         with(regs)
-        final switch(ins.opcode) // TODO: replace it with "wire connection matrix"
+        final switch(ins.basic_opcode) // TODO: replace it with "wire connection matrix"?
         {
             case special: assert(false);
             case SET: r = a; break;
@@ -423,20 +423,27 @@ struct Instruction
         ushort word;
 
         mixin(bitfields!(
-            ubyte, "opcode",    5, // TODO: make it private or _opcode
+            Opcode, "__opcode", 5,
             ubyte, "b",         5,
             ubyte, "a",         6,
         ));
     }
 
+    bool isSpecialOpcode() const pure
+    {
+        return __opcode == Opcode.special;
+    }
+
     Opcode basic_opcode() const pure
     {
-        return cast(Opcode) opcode;
+        assert(!isSpecialOpcode);
+
+        return __opcode;
     }
 
     SpecialOpcode spec_opcode() const pure
     {
-        assert(opcode == Opcode.special);
+        assert(isSpecialOpcode);
 
         return cast(SpecialOpcode) b;
     }
@@ -445,7 +452,7 @@ struct Instruction
     {
         import std.conv: to;
 
-        if(opcode == Opcode.special)
+        if(isSpecialOpcode)
         {
             return
                 format!"special opcode=%02x (%s), opA=%02x"
@@ -455,7 +462,7 @@ struct Instruction
         {
             return
                 format!"opcode=%02x (%s), opA=%02x, opB=%02x"
-                (opcode, opcode.to!string, a, b);
+                (basic_opcode, basic_opcode.to!string, a, b);
         }
     }
 }

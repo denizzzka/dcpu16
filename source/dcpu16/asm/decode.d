@@ -96,7 +96,7 @@ private string fmt(T)(T v)
 
 string explainInstruction(in Memory mem, ushort pc, in Instruction ins)
 {
-    if(ins.opcode != Opcode.special)
+    if(!ins.isSpecialOpcode)
         return explainBasicInstruction(mem, pc, ins);
     else
         return explainSpecialInstruction(mem, pc, ins);
