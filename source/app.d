@@ -72,6 +72,9 @@ extern (C) int UIAppMain(string[] args)
         });
 
     auto sldr = cast(SliderWidget) window.mainWidget.childById("CPU_SPEED");
+    sldr.minValue = 1;
+    sldr.maxValue = 1001;
+    sldr.position = 100;
     sldr.scrollEvent = delegate(AbstractSlider source, ScrollEvent event) {
             if (event.action == ScrollAction.SliderMoved)
             {
@@ -79,7 +82,7 @@ extern (C) int UIAppMain(string[] args)
                 if(!spdInd)
                     spdInd = window.mainWidget.childById("SPEED_INDICATOR");
                 import std.conv: to;
-                spdInd.text = source.position.to!dstring;
+                spdInd.text = source.position.to!dstring~" Hz";
                 emulScr.setCPUFreq(source.position);
             }
 
@@ -148,9 +151,10 @@ class EmulatorScreenWidget : ImageWidget
         display = d;
     }
 
-    void setCPUFreq(uint Hz = 100)
+    void setCPUFreq(uint Hz)
     {
         assert(Hz > 0);
+        assert(Hz <= 1000);
 
         auto mills = 1000 / Hz;
         clockTimer = setTimer(mills);
