@@ -18,7 +18,7 @@ extern (C) int UIAppMain(string[] args)
             TextWidget { text: "DCPU-16 emulator"; fontSize: 150%; fontWeight: 800 }
 
             HorizontalLayout {
-                GroupBox { id: EMUL_SCREEN_GRP }
+                GroupBox { id: EMUL_SCREEN_GRP; text: "Screen" }
                 VerticalLayout {
                     TextWidget { id: SPEED_INDICATOR; text: "<speed>"; fontSize: 100%; fontWeight: 800 }
                     TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
@@ -200,12 +200,17 @@ class EmulatorScreenWidget : ImageWidget
         onStepDg = onStep;
 
         foreach(ref sym; font)
+        {
             sym = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
+            sym.fill(0xff000000);
+        }
 
         loadFontBitmap;
 
         //FIXME: remove it
         comp.mem[0x8005] = 0b0100_0001_1_0111111;
+        comp.mem[0x8006] = 0b0100_0001_1_0111111;
+        comp.mem[0x8007] = 0b0100_0001_1_0111111;
 
         bgGlyph = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
     }
@@ -287,15 +292,7 @@ class EmulatorScreenWidget : ImageWidget
     private void placeFrameToBuf()
     {
         // Border
-        cdbuf.fillRect(Rect(0, 0, cdbuf.width, cdbuf.height), 0x00111111 /*makeRGBA(display.getBorderColor)*/);
-
-        //~ // Picture
-        //~ display.forEachPixel(
-            //~ (x, y, c)
-            //~ {
-                //~ cdbuf.drawPixel(x + borderWidth, y + borderWidth, makeRGBA(c));
-            //~ }
-        //~ );
+        cdbuf.fillRect(Rect(0, 0, cdbuf.width, cdbuf.height), makeRGBA(display.getBorderColor));
 
         foreach(ubyte y; 0 .. Y_RESOLUTION)
             foreach(ubyte x; 0 .. X_RESOLUTION)
@@ -360,9 +357,7 @@ class EmulatorScreenWidget : ImageWidget
                 {
                     bool isSet = display.getPixelOfSymbol(b, x, y);
 
-                    import col = dlangui.graphics.colors;
-
-                    sym.drawPixel(x, y, isSet ? 0x00ffffff : 0xff000000);
+                    sym.drawPixel(x, y, isSet ? 0x00ffffff : 0xff060606);
                 }
             }
         }
