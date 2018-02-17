@@ -93,10 +93,18 @@ extern (C) int UIAppMain(string[] args)
     sldr.minValue = 1;
     sldr.maxValue = 1001;
     sldr.position = 100;
+
+    void displayCPUSpeed()
+    {
+        widget!"SPEED_INDICATOR".text = sldr.position.to!dstring~" Hz";
+    }
+
+    displayCPUSpeed;
+
     sldr.scrollEvent = delegate(AbstractSlider source, ScrollEvent event) {
             if (event.action == ScrollAction.SliderMoved)
             {
-                widget!"SPEED_INDICATOR".text = source.position.to!dstring~" Hz";
+                displayCPUSpeed;
                 emulScr.setCPUFreq(source.position);
             }
 
@@ -134,7 +142,7 @@ extern (C) int UIAppMain(string[] args)
     else
         emulScr.loadBinaryFile(args[1], true);
 
-    emulScr.startClocking();
+    emulScr.startClocking(sldr.position);
 
     // show window
     window.show();
@@ -173,12 +181,19 @@ class EmulatorScreenWidget : ImageWidget
         assert(Hz <= 1000);
 
         auto mills = 1000 / Hz;
+        static bool timerCreated = false;
+
+        if(!timerCreated)
+            timerCreated = true;
+        else
+            cancelTimer(clockTimer);
+
         clockTimer = setTimer(mills);
     }
 
-    void startClocking()
+    void startClocking(uint initialClockingFreq_Hz)
     {
-        setCPUFreq(100);
+        setCPUFreq(initialClockingFreq_Hz);
         screenDrawTimer = setTimer(1000);
         blinkingTimer = setTimer(800);
     }
