@@ -211,6 +211,11 @@ class LEM1802 : IDevice
         return PaletteColor(c);
     }
 
+    PaletteColor getBorderColor() const
+    {
+        return getColor(borderColor);
+    }
+
     /**
      * Turn switch state of blinking symbols
      *

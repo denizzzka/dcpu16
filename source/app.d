@@ -155,7 +155,8 @@ import dcpu16.emulator.devices.lem1802;
 
 class EmulatorScreenWidget : ImageWidget
 {
-    public ColorDrawBuf cdbuf;
+    enum borderWidth = 4;
+    private ColorDrawBuf cdbuf;
     private Computer comp;
     private LEM1802 display;
     bool isPaused = true;
@@ -169,7 +170,7 @@ class EmulatorScreenWidget : ImageWidget
     {
         super(id);
 
-        cdbuf = new ColorDrawBuf(X_PIXELS, Y_PIXELS);
+        cdbuf = new ColorDrawBuf(X_PIXELS + borderWidth*2, Y_PIXELS + borderWidth*2);
         comp = c;
         display = d;
         onStepDg = onStep;
@@ -241,19 +242,28 @@ class EmulatorScreenWidget : ImageWidget
         return true;
     }
 
+    private static uint makeRGBA(PaletteColor c) pure @property
+    {
+        import col = dlangui.graphics.colors;
+
+        return col.makeRGBA(
+                c.r * 17,
+                c.g * 17,
+                c.b * 17,
+                0
+            );
+    }
+
     private void placeFrameToBuf()
     {
+        // Border
+        cdbuf.fillRect(Rect(0, 0, cdbuf.width, cdbuf.height), makeRGBA(display.getBorderColor));
+
+        // Picture
         display.forEachPixel(
             (x, y, c)
             {
-                auto rgba = makeRGBA(
-                        c.r * 17,
-                        c.g * 17,
-                        c.b * 17,
-                        0
-                    );
-
-                cdbuf.drawPixel(x, y, rgba);
+                cdbuf.drawPixel(x + borderWidth, y + borderWidth, makeRGBA(c));
             }
         );
     }
