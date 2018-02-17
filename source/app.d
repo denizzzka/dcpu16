@@ -250,8 +250,16 @@ class EmulatorScreenWidget : ImageWidget
 
     void tick()
     {
-        foreach(_; 0 .. numOfStepsPerTick)
-            step;
+        try
+        {
+            foreach(_; 0 .. numOfStepsPerTick)
+                step;
+        }
+        catch(Dcpu16Exception e)
+        {
+            if(onExceptionDg)
+                onExceptionDg(e);
+        }
     }
 
     void step()
@@ -260,15 +268,7 @@ class EmulatorScreenWidget : ImageWidget
 
         onStepDg();
 
-        try
-        {
-            comp.cpu.step;
-        }
-        catch(Dcpu16Exception e)
-        {
-            if(onExceptionDg)
-                onExceptionDg(e);
-        }
+        comp.cpu.step;
     }
 
     override bool onTimer(ulong id)
