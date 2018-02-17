@@ -1,4 +1,4 @@
-module dcpu16.emulator.asm_.decode;
+module dcpu16.asm_.decode;
 
 import dcpu16.emulator: Memory;
 import dcpu16.emulator.cpu;
@@ -17,7 +17,7 @@ private string explainRegisterOfOperand(ushort operand)
         case 5: return "Z";
         case 6: return "I";
         case 7: return "J";
-        default: assert(false);
+        default: return "unknown_register";
     }
 }
 

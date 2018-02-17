@@ -438,7 +438,7 @@ struct Instruction
     {
         import std.conv: to;
 
-        if(opcode == 0) // special opcode
+        if(opcode == Opcode.special)
         {
             return
                 format!"special opcode=%02x (%s), opA=%02x"
