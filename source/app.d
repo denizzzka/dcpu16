@@ -25,6 +25,7 @@ extern (C) int UIAppMain(string[] args)
             }
 
             HorizontalLayout {
+                Button { id: STATE; text: "Print state" }
                 Button { id: STEP; text: "Step" }
                 Button { id: PAUSE; text: "Run" }
                 Button { id: RESET_CPU; text: "Reset CPU" }
@@ -55,6 +56,11 @@ extern (C) int UIAppMain(string[] args)
 
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
             emulScr.comp.cpu.step;
+            comp.machineState.writeln;
+            return true;
+        });
+
+    window.mainWidget.childById("STATE").addOnClickListener((Widget) {
             comp.machineState.writeln;
             return true;
         });

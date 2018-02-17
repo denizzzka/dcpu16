@@ -72,14 +72,12 @@ import std.string: format;
 
 private string explainBasicInstruction(in Memory mem, ushort pc, in Instruction ins)
 {
-    assert(ins.opcode != 0);
-
     string a = explainOperand(mem, pc, ins.a, true);
     string b = explainOperand(mem, pc, ins.b, false);
 
     import std.conv: to;
 
-    return format("%s %s, %s", ins.opcode.to!string, a, b);
+    return format("%s %s, %s", ins.basic_opcode.to!string, a, b);
 }
 
 private string explainSpecialInstruction(in Memory mem, ushort pc, in Instruction ins)
@@ -88,7 +86,7 @@ private string explainSpecialInstruction(in Memory mem, ushort pc, in Instructio
 
     string a = explainOperand(mem, pc, ins.a, true);
 
-    return format("%s %s", ins.opcode.to!string, a);
+    return format("%s %s", ins.spec_opcode.to!string, a);
 }
 
 private string fmt(T)(T v)

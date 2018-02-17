@@ -423,14 +423,21 @@ struct Instruction
         ushort word;
 
         mixin(bitfields!(
-            ubyte, "opcode",    5,
+            ubyte, "opcode",    5, // TODO: make it private or _opcode
             ubyte, "b",         5,
             ubyte, "a",         6,
         ));
     }
 
+    Opcode basic_opcode() const pure
+    {
+        return cast(Opcode) opcode;
+    }
+
     SpecialOpcode spec_opcode() const pure
     {
+        assert(opcode == Opcode.special);
+
         return cast(SpecialOpcode) b;
     }
 
