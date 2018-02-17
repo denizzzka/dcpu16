@@ -198,21 +198,15 @@ class EmulatorScreenWidget : ImageWidget
         comp = c;
         display = d;
         onStepDg = onStep;
+        bgGlyph = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
 
         foreach(ref sym; font)
         {
             sym = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
-            sym.fill(0xff000000);
+            sym.fill(0xff00ff00);
         }
 
         loadFontBitmap;
-
-        //FIXME: remove it
-        comp.mem[0x8005] = 0b0100_0001_1_0111111;
-        comp.mem[0x8006] = 0b0100_0001_1_0111111;
-        comp.mem[0x8007] = 0b0100_0001_1_0111111;
-
-        bgGlyph = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
     }
 
     void setCPUFreq(uint Hz)
@@ -305,12 +299,10 @@ class EmulatorScreenWidget : ImageWidget
 
                 if(sym.foreground != sym.background && visibility)
                 {
-                    auto fgGlyph = new ColorDrawBuf(font[sym.character]);
-
                     auto fg = makeRGBA(display.getColor(sym.foreground));
 
-                    ColorTransform tr = { multiply: fg };
-                    fgGlyph.transformColors(tr);
+                    ColorTransform tr = { multiply: fg | 0xff000000 };
+                    auto fgGlyph = font[sym.character].transformColors(tr);
 
                     bgGlyph.drawImage(0, 0, fgGlyph);
                 }
@@ -357,7 +349,8 @@ class EmulatorScreenWidget : ImageWidget
                 {
                     bool isSet = display.getPixelOfSymbol(b, x, y);
 
-                    sym.drawPixel(x, y, isSet ? 0x00ffffff : 0xff060606);
+                    if(isSet)
+                        sym.drawPixel(x, y, 0x00ffffff);
                 }
             }
         }
