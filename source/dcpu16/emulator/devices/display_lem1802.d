@@ -23,6 +23,7 @@ class LEM1802 : IDevice
     private const(ushort)* palette = defaultPalette.ptr;
     private ubyte borderColor;
     bool isBlinkingVisible = true;
+    void delegate(InterruptAction) onInterruptAction;
 
     bool isDisconnected() const { return screen is null; }
 
@@ -33,10 +34,12 @@ class LEM1802 : IDevice
 
     void handleHardwareInterrupt(Computer comp)
     {
-        with(InterruptActions)
+        auto action = cast(InterruptAction) comp.cpu.regs.A;
+
+        with(InterruptAction)
         with(comp)
         with(cpu.regs)
-        switch(A)
+        switch(action)
         {
             case MEM_MAP_SCREEN:
                 screen = (B == 0) ? null : &mem[B];
@@ -65,6 +68,9 @@ class LEM1802 : IDevice
             default:
                 break;
         }
+
+        if(onInterruptAction !is null)
+            onInterruptAction(action);
     }
 
     private void dump(Memory mem, const(ushort)[] from, ushort to) pure
@@ -304,7 +310,7 @@ struct PaletteColor
     }
 }
 
-enum InterruptActions : ushort
+enum InterruptAction : ushort
 {
     MEM_MAP_SCREEN,
     MEM_MAP_FONT,

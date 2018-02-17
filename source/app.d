@@ -67,6 +67,8 @@ extern (C) int UIAppMain(string[] args)
     auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp, &onStepDg);
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
 
+    disp.onInterruptAction = &emulScr.remapVideo;
+
     void displayPauseState()
     {
         widget!"PAUSE".text = emulScr.isPaused ? "Run" : "Pause";
@@ -337,8 +339,6 @@ class EmulatorScreenWidget : ImageWidget
 
     private void loadFontBitmap()
     {
-        import col = dlangui.graphics.colors;
-
         foreach(ubyte i, ref sym; font)
         {
             LEM1802.SymbolBitmap b = display.getSymbolBitmap(i);
@@ -354,5 +354,11 @@ class EmulatorScreenWidget : ImageWidget
                 }
             }
         }
+    }
+
+    void remapVideo(InterruptAction ia)
+    {
+        if(ia == InterruptAction.MEM_MAP_FONT)
+            loadFontBitmap;
     }
 }
