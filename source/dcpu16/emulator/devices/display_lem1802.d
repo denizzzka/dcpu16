@@ -88,13 +88,15 @@ class LEM1802 : IDevice
         return getSymbol(x + y * X_RESOLUTION);
     }
 
+    alias SymbolBitmap = ushort[2];
+
     bool getPixel(uint x, uint y) const
     {
         auto symbolX = x / CHAR_SIZE_X;
         auto symbolY = y / CHAR_SIZE_Y;
 
         auto s = getSymbol(symbolX, symbolY);
-        auto bitmap = getSymbolBitmap(s.character);
+        SymbolBitmap bitmap = getSymbolBitmap(s.character);
 
         auto relativeX = x % CHAR_SIZE_X;
         auto relativeY = y % CHAR_SIZE_Y;
@@ -102,7 +104,7 @@ class LEM1802 : IDevice
         return getPixelOfSymbol(bitmap, relativeX, relativeY);
     }
 
-    static bool getPixelOfSymbol(ushort[2] symbolBitmap, uint relativeX, uint relativeY) pure
+    static bool getPixelOfSymbol(SymbolBitmap symbolBitmap, uint relativeX, uint relativeY) pure
     {
         assert(relativeX < CHAR_SIZE_X);
         assert(relativeY < CHAR_SIZE_Y);
@@ -155,7 +157,7 @@ class LEM1802 : IDevice
                 assert(pending[y][x] == getPixelOfSymbol(f_img, x, y));
     }
 
-    private ushort[2] getSymbolBitmap(ubyte character) pure const
+    SymbolBitmap getSymbolBitmap(ubyte character) pure const
     {
         const ushort* ptr = &font[character * 2];
 
@@ -169,7 +171,6 @@ class LEM1802 : IDevice
             for(ubyte x = 0; x < X_RESOLUTION * CHAR_SIZE_X; x++)
             {
                 const s = getSymbol(x / CHAR_SIZE_X, y / CHAR_SIZE_Y);
-                const bitmap = getSymbolBitmap(s.character);
 
                 PaletteColor c;
 
