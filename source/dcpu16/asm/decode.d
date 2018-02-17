@@ -68,32 +68,11 @@ private string explainOperand(in Memory mem, ref ushort pc, ushort operand, bool
     }
 }
 
-private void complainWrongOpcode(in Instruction ins) pure
-{
-    throw new Exception("Wrong opcode, instruction "~ins.toString, __FILE__, __LINE__);
-}
-
 import std.string: format;
 
-string explainBasicInstruction(in Memory mem, ushort pc, in Instruction ins)
+private string explainBasicInstruction(in Memory mem, ushort pc, in Instruction ins)
 {
-    if(ins.opcode > Opcode.STD)
-        complainWrongOpcode(ins);
-
-    with(Opcode)
-    switch(ins.opcode)
-    {
-        case special: assert(false);
-        case unused_0x18:
-        case unused_0x19:
-        case unused_0x1c:
-        case unused_0x1d:
-            complainWrongOpcode(ins);
-            assert(false);
-
-        default:
-            break;
-    }
+    assert(ins.opcode != 0);
 
     string a = explainOperand(mem, pc, ins.a, true);
     string b = explainOperand(mem, pc, ins.b, false);
@@ -103,7 +82,24 @@ string explainBasicInstruction(in Memory mem, ushort pc, in Instruction ins)
     return format("%s %s, %s", ins.opcode.to!string, a, b);
 }
 
+private string explainSpecialInstruction(in Memory mem, ushort pc, in Instruction ins)
+{
+    import std.conv: to;
+
+    string a = explainOperand(mem, pc, ins.a, true);
+
+    return format("%s %s", ins.opcode.to!string, a);
+}
+
 private string fmt(T)(T v)
 {
     return format("%04x", v);
+}
+
+string explainInstruction(in Memory mem, ushort pc, in Instruction ins)
+{
+    if(ins.opcode != Opcode.special)
+        return explainBasicInstruction(mem, pc, ins);
+    else
+        return explainSpecialInstruction(mem, pc, ins);
 }
