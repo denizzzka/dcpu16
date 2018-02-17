@@ -14,17 +14,11 @@ class Dcpu16Exception : Exception
         size_t line
     ) pure
     {
-        import dcpu16.asm_.decode;
-
-        string insExpl = explainInstruction(comp.mem, comp.cpu.regs.PC, comp.cpu.getCurrInstruction);
-
         super(
             format(
-                    "%s\nInstruction: %s\nDisassembled: %s\n%s",
+                    "%s\n%s",
                     msg,
-                    comp.cpu.getCurrInstruction.toString,
-                    insExpl,
-                    comp.cpu.regsToString
+                    comp.machineState
                 ),
             file,
             line

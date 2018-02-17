@@ -69,12 +69,14 @@ class Computer
         return ret;
     }
 
-    string machineState() const
+    string machineState() const pure
     {
-        return format("Current instruction: %s\n%s\nMemory: %s\n",
+        import dcpu16.asm_.decode: explainInstruction;
+
+        return format("Asm: %s\nInstruction: %s\n%s",
+                explainInstruction(mem, cpu.regs.PC, cpu.getCurrInstruction),
                 cpu.getCurrInstruction.toString,
                 cpu.regsToString,
-                memDump(0)
             );
     }
 }

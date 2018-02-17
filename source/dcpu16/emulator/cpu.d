@@ -49,10 +49,10 @@ pure struct CPU
 {
     import dcpu16.emulator.exception;
 
-    Computer computer;
     Registers regs;
-    InteruptQueue intQueue;
     bool isBurning;
+    private Computer computer;
+    private InteruptQueue intQueue;
 
     this(Computer c) pure
     {
