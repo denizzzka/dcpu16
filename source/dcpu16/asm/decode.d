@@ -5,7 +5,7 @@ import dcpu16.emulator.cpu;
 
 pure:
 
-string explainRegisterOfOperand(ushort operand)
+private string explainRegisterOfOperand(ushort operand)
 {
     switch(operand)
     {
@@ -68,9 +68,42 @@ private string explainOperand(in Memory mem, ref ushort pc, ushort operand, bool
     }
 }
 
+private void complainWrongOpcode(in Instruction ins) pure
+{
+    throw new Exception("Wrong opcode, instruction "~ins.toString, __FILE__, __LINE__);
+}
+
+import std.string: format;
+
+string explainBasicInstruction(in Memory mem, ushort pc, in Instruction ins)
+{
+    if(ins.opcode > Opcode.STD)
+        complainWrongOpcode(ins);
+
+    with(Opcode)
+    switch(ins.opcode)
+    {
+        case special: assert(false);
+        case unused_0x18:
+        case unused_0x19:
+        case unused_0x1c:
+        case unused_0x1d:
+            complainWrongOpcode(ins);
+            assert(false);
+
+        default:
+            break;
+    }
+
+    string a = explainOperand(mem, pc, ins.a, true);
+    string b = explainOperand(mem, pc, ins.b, false);
+
+    import std.conv: to;
+
+    return format("%s %s, %s", ins.opcode.to!string, a, b);
+}
+
 private string fmt(T)(T v)
 {
-    import std.string;
-
     return format("%04x", v);
 }
