@@ -5,6 +5,7 @@ import dlangui.dialogs.dialog;
 mixin APP_ENTRY_POINT;
 
 import dcpu16.emulator;
+import dcpu16.emulator.exception: Dcpu16Exception;
 
 extern (C) int UIAppMain(string[] args)
 {
@@ -66,14 +67,34 @@ extern (C) int UIAppMain(string[] args)
     auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp, &onStepDg);
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
 
-    window.mainWidget.childById("PAUSE").addOnClickListener((Widget w) {
+    void displayPauseState()
+    {
+        widget!"PAUSE".text = emulScr.isPaused ? "Run" : "Pause";
+        widget!"STEP".enabled = emulScr.isPaused;
+    }
+
+    displayPauseState;
+
+    widget!"PAUSE".addOnClickListener((Widget w) {
             emulScr.isPaused = !emulScr.isPaused;
-            w.text = emulScr.isPaused ? "Run" : "Pause";
+            displayPauseState;
             return true;
         });
 
+    emulScr.onExceptionDg = (Dcpu16Exception e)
+    {
+        import std.stdio;
+        e.msg.writeln;
+
+        if(!emulScr.isPaused)
+        {
+            emulScr.isPaused = true;
+            displayPauseState;
+        }
+    };
+
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
-            emulScr.comp.cpu.step;
+            emulScr.step;
             comp.machineState.writeln;
             return true;
         });
@@ -165,6 +186,7 @@ class EmulatorScreenWidget : ImageWidget
     private ulong screenDrawTimer;
     private ulong blinkingTimer;
     private void delegate() onStepDg;
+    private void delegate(Dcpu16Exception) onExceptionDg;
 
     this(string id, Computer c, LEM1802 d, void delegate() onStep)
     {
@@ -201,23 +223,18 @@ class EmulatorScreenWidget : ImageWidget
 
     void step()
     {
-        if(!isPaused)
+        import dcpu16.emulator.exception;
+
+        onStepDg();
+
+        try
         {
-            import dcpu16.emulator.exception;
-
-            onStepDg();
-
-            try
-            {
-                comp.cpu.step;
-            }
-            catch(Dcpu16Exception e)
-            {
-                import std.stdio;
-
-                e.msg.writeln;
-                isPaused = true;
-            }
+            comp.cpu.step;
+        }
+        catch(Dcpu16Exception e)
+        {
+            if(onExceptionDg)
+                onExceptionDg(e);
         }
     }
 
@@ -225,7 +242,8 @@ class EmulatorScreenWidget : ImageWidget
     {
         if(id == clockTimer)
         {
-            step();
+            if(!isPaused)
+                step();
         }
         else if(id == screenDrawTimer)
         {
