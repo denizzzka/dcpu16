@@ -211,12 +211,26 @@ class EmulatorScreenWidget : ImageWidget
         loadFontBitmap;
     }
 
+    private uint numOfStepsPerTick;
+
     void setCPUFreq(uint Hz)
     {
         assert(Hz > 0);
-        assert(Hz <= 1000);
 
-        auto mills = 1000 / Hz;
+        enum minTimerInterval = 50;
+        uint timerInterval;
+
+        if(1000 / Hz > minTimerInterval)
+        {
+            timerInterval = 1000 / Hz;
+            numOfStepsPerTick = 1;
+        }
+        else
+        {
+            timerInterval = minTimerInterval;
+            numOfStepsPerTick = Hz / timerInterval;
+        }
+
         static bool timerCreated = false;
 
         if(!timerCreated)
@@ -224,7 +238,7 @@ class EmulatorScreenWidget : ImageWidget
         else
             cancelTimer(clockTimer);
 
-        clockTimer = setTimer(mills);
+        clockTimer = setTimer(timerInterval);
     }
 
     void startClocking(uint initialClockingFreq_Hz)
@@ -232,6 +246,12 @@ class EmulatorScreenWidget : ImageWidget
         setCPUFreq(initialClockingFreq_Hz);
         screenDrawTimer = setTimer(1000);
         blinkingTimer = setTimer(800);
+    }
+
+    void tick()
+    {
+        foreach(_; 0 .. numOfStepsPerTick)
+            step;
     }
 
     void step()
@@ -256,7 +276,7 @@ class EmulatorScreenWidget : ImageWidget
         if(id == clockTimer)
         {
             if(!isPaused)
-                step();
+                tick();
         }
         else if(id == screenDrawTimer)
         {
