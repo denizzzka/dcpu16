@@ -20,6 +20,7 @@ extern (C) int UIAppMain(string[] args)
                 GroupBox { id: EMUL_SCREEN_GRP }
                 VerticalLayout {
                     TextWidget { id: SPEED_INDICATOR; text: "<speed>"; fontSize: 100%; fontWeight: 800 }
+                    TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
                     SliderWidget { id: CPU_SPEED }
                 }
             }
@@ -34,6 +35,15 @@ extern (C) int UIAppMain(string[] args)
         }
     });
 
+    Widget widget(dstring name)() const
+    {
+        static Widget w;
+
+        if(w is null)
+            w = window.mainWidget.childById(name);
+
+        return w;
+    }
 
     import dcpu16.emulator.devices.lem1802;
     import dcpu16.emulator.devices.keyboard;
@@ -45,7 +55,15 @@ extern (C) int UIAppMain(string[] args)
     comp.attachDevice = disp;
     comp.attachDevice = kbd;
 
-    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp);
+    long clockingCounter;
+
+    void onStepDg()
+    {
+        clockingCounter++;
+        widget!"CLOCK_NUM_INDICATOR".text = clockingCounter.to!dstring;
+    }
+
+    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp, &onStepDg);
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
 
     window.mainWidget.childById("PAUSE").addOnClickListener((Widget w) {
@@ -78,11 +96,7 @@ extern (C) int UIAppMain(string[] args)
     sldr.scrollEvent = delegate(AbstractSlider source, ScrollEvent event) {
             if (event.action == ScrollAction.SliderMoved)
             {
-                static Widget spdInd;
-                if(!spdInd)
-                    spdInd = window.mainWidget.childById("SPEED_INDICATOR");
-                import std.conv: to;
-                spdInd.text = source.position.to!dstring~" Hz";
+                widget!"SPEED_INDICATOR".text = source.position.to!dstring~" Hz";
                 emulScr.setCPUFreq(source.position);
             }
 
@@ -141,14 +155,16 @@ class EmulatorScreenWidget : ImageWidget
     private ulong clockTimer;
     private ulong screenDrawTimer;
     private ulong blinkingTimer;
+    private void delegate() onStepDg;
 
-    this(string id, Computer c, LEM1802 d)
+    this(string id, Computer c, LEM1802 d, void delegate() onStep)
     {
         super(id);
 
         cdbuf = new ColorDrawBuf(X_PIXELS, Y_PIXELS);
         comp = c;
         display = d;
+        onStepDg = onStep;
     }
 
     void setCPUFreq(uint Hz)
@@ -167,25 +183,33 @@ class EmulatorScreenWidget : ImageWidget
         blinkingTimer = setTimer(800);
     }
 
+    void step()
+    {
+        if(!isPaused)
+        {
+            import dcpu16.emulator.exception;
+
+            onStepDg();
+
+            try
+            {
+                comp.cpu.step;
+            }
+            catch(Dcpu16Exception e)
+            {
+                import std.stdio;
+
+                e.msg.writeln;
+                isPaused = true;
+            }
+        }
+    }
+
     override bool onTimer(ulong id)
     {
         if(id == clockTimer)
         {
-            import std.stdio;
-
-            if(!isPaused)
-            {
-                import dcpu16.emulator.exception;
-
-                try
-                    comp.cpu.step;
-                catch(Dcpu16Exception e)
-                {
-                    e.msg.writeln;
-                    isPaused = true;
-                    comp.cpu.reset;
-                }
-            }
+            step();
         }
         else if(id == screenDrawTimer)
         {
