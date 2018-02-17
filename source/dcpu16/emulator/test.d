@@ -19,6 +19,21 @@ unittest
 
 unittest
 {
+    enum blob = import("test_basic_stuff.bin");
+
+    auto comp = new Computer();
+    comp.load(cast(ubyte[]) blob, true);
+
+    foreach(_; 0 .. 1000)
+    {
+        comp.cpu.step;
+    }
+
+    assert(comp.cpu.regs.x == 0x40);
+}
+
+unittest
+{
     enum str = import("self-copy.bin");
     auto blob = cast(ubyte[]) str;
 
