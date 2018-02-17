@@ -22,7 +22,7 @@ extern (C) int UIAppMain(string[] args)
                 VerticalLayout {
                     TextWidget { id: SPEED_INDICATOR; text: "<speed>"; fontSize: 100%; fontWeight: 800 }
                     TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
-                    SliderWidget { id: CPU_SPEED }
+                    SliderWidget { id: CPU_SPEED; minWidth: 200 }
                 }
             }
 
@@ -114,7 +114,7 @@ extern (C) int UIAppMain(string[] args)
 
     auto sldr = cast(SliderWidget) window.mainWidget.childById("CPU_SPEED");
     sldr.minValue = 1;
-    sldr.maxValue = 1001;
+    sldr.maxValue = 100_001;
     sldr.position = 100;
 
     void displayCPUSpeed()
