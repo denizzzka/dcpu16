@@ -187,6 +187,8 @@ class EmulatorScreenWidget : ImageWidget
     private ulong blinkingTimer;
     private void delegate() onStepDg;
     private void delegate(Dcpu16Exception) onExceptionDg;
+    private ColorDrawBuf[128] font;
+    private ColorDrawBuf bgGlyph;
 
     this(string id, Computer c, LEM1802 d, void delegate() onStep)
     {
@@ -196,6 +198,16 @@ class EmulatorScreenWidget : ImageWidget
         comp = c;
         display = d;
         onStepDg = onStep;
+
+        foreach(ref sym; font)
+            sym = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
+
+        loadFontBitmap;
+
+        //FIXME: remove it
+        comp.mem[0x8005] = 0b0100_0001_1_0111111;
+
+        bgGlyph = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
     }
 
     void setCPUFreq(uint Hz)
@@ -275,15 +287,39 @@ class EmulatorScreenWidget : ImageWidget
     private void placeFrameToBuf()
     {
         // Border
-        cdbuf.fillRect(Rect(0, 0, cdbuf.width, cdbuf.height), makeRGBA(display.getBorderColor));
+        cdbuf.fillRect(Rect(0, 0, cdbuf.width, cdbuf.height), 0x00111111 /*makeRGBA(display.getBorderColor)*/);
 
-        // Picture
-        display.forEachPixel(
-            (x, y, c)
+        //~ // Picture
+        //~ display.forEachPixel(
+            //~ (x, y, c)
+            //~ {
+                //~ cdbuf.drawPixel(x + borderWidth, y + borderWidth, makeRGBA(c));
+            //~ }
+        //~ );
+
+        foreach(ubyte y; 0 .. Y_RESOLUTION)
+            foreach(ubyte x; 0 .. X_RESOLUTION)
             {
-                cdbuf.drawPixel(x + borderWidth, y + borderWidth, makeRGBA(c));
+                Symbol sym = display.getSymbol(x, y);
+                bool visibility = !sym.blinking || display.isBlinkingVisible;
+                auto bg = makeRGBA(display.getColor(sym.background));
+
+                bgGlyph.fill(bg);
+
+                if(sym.foreground != sym.background && visibility)
+                {
+                    auto fgGlyph = new ColorDrawBuf(font[sym.character]);
+
+                    auto fg = makeRGBA(display.getColor(sym.foreground));
+
+                    ColorTransform tr = { multiply: fg };
+                    fgGlyph.transformColors(tr);
+
+                    bgGlyph.drawImage(0, 0, fgGlyph);
+                }
+
+                cdbuf.drawImage(x * CHAR_SIZE_X + borderWidth, y * CHAR_SIZE_Y + borderWidth, bgGlyph);
             }
-        );
     }
 
     override void onDraw(DrawBuf buf)
@@ -308,5 +344,27 @@ class EmulatorScreenWidget : ImageWidget
 
         ubyte[] blob = cast(ubyte[]) read(filename);
         comp.load(blob, wrongEndianness);
+    }
+
+    private void loadFontBitmap()
+    {
+        import col = dlangui.graphics.colors;
+
+        foreach(ubyte i, ref sym; font)
+        {
+            LEM1802.SymbolBitmap b = display.getSymbolBitmap(i);
+
+            foreach(y; 0 .. CHAR_SIZE_Y)
+            {
+                foreach(x; 0 .. CHAR_SIZE_X)
+                {
+                    bool isSet = display.getPixelOfSymbol(b, x, y);
+
+                    import col = dlangui.graphics.colors;
+
+                    sym.drawPixel(x, y, isSet ? 0x00ffffff : 0xff000000);
+                }
+            }
+        }
     }
 }

@@ -22,7 +22,7 @@ class LEM1802 : IDevice
     private const(ushort)* font = defaultFont.ptr;
     private const(ushort)* palette = defaultPalette.ptr;
     private ubyte borderColor;
-    private bool isBlinkingVisible = true;
+    bool isBlinkingVisible = true;
 
     bool isDisconnected() const { return screen is null; }
 
@@ -205,7 +205,7 @@ class LEM1802 : IDevice
         return ret;
     }
 
-    private PaletteColor getColor(ubyte paletteIndex) const
+    PaletteColor getColor(ubyte paletteIndex) const
     {
         ushort c = palette[paletteIndex];
 
@@ -319,7 +319,7 @@ struct RGB
     ubyte r, g, b;
 }
 
-immutable ushort[256] defaultFont =
+private immutable ushort[256] defaultFont =
 [
     0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,
     0x242e, 0x2400, 0x082a, 0x0800, 0x0008, 0x0000, 0x0808, 0x0808,
@@ -355,7 +355,7 @@ immutable ushort[256] defaultFont =
     0x0077, 0x0000, 0x4136, 0x0800, 0x0201, 0x0201, 0x0205, 0x0200,
 ];
 
-immutable ushort[16] defaultPalette =
+private immutable ushort[16] defaultPalette =
 [
 	0x000, 0x00a, 0x0a0, 0x0aa,
 	0xa00, 0xa0a, 0xa50, 0xaaa,
