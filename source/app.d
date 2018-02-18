@@ -348,10 +348,9 @@ class EmulatorScreenWidget : ImageWidget
     private void placeFrameToBuf()
     {
         // Border
-        // FIXME: for some reason it is need to recreate this buffer
-        // because otherwise OpenGL can't draw to it after first drawing
+        // FIXME: recreation need: OpenGL can't draw it after first drawing because caching
         cdbuf = new ColorDrawBuf(X_PIXELS + borderWidth*2, Y_PIXELS + borderWidth*2);
-        cdbuf.fillRect(Rect(0, 0, cdbuf.width, cdbuf.height), makeRGBA(display.getBorderColor));
+        cdbuf.fill(makeRGBA(display.getBorderColor));
 
         foreach(ubyte y; 0 .. Y_RESOLUTION)
             foreach(ubyte x; 0 .. X_RESOLUTION)
