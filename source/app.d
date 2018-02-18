@@ -9,6 +9,9 @@ import dcpu16.emulator.devices.lem1802;
 import dcpu16.emulator.devices.keyboard;
 import dcpu16.emulator.exception: Dcpu16Exception;
 
+import std.stdio;
+import std.format;
+
 extern (C) int UIAppMain(string[] args)
 {
     Window window = Platform.instance.createWindow("DCPU-16 emulator", null, WindowFlag.Resizable | WindowFlag.ExpandSize);
@@ -25,6 +28,7 @@ extern (C) int UIAppMain(string[] args)
                     TextWidget { id: SPEED_INDICATOR; text: "<speed>"; fontSize: 100%; fontWeight: 800 }
                     TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
                     SliderWidget { id: CPU_SPEED; minWidth: 200 }
+                    StringGridWidget { id: MEM_DUMP; minWidth: 300; minHeight: 600;  }
                 }
             }
 
@@ -38,17 +42,15 @@ extern (C) int UIAppMain(string[] args)
         }
     });
 
-    Widget widget(dstring name)() const
+    T widget(dstring name, T = Widget)() const
     {
-        static Widget w;
+        static T w;
 
         if(w is null)
-            w = window.mainWidget.childById(name);
+            w = cast(T) window.mainWidget.childById(name);
 
         return w;
     }
-
-    import std.stdio;
 
     auto comp = new Computer;
     auto disp = new LEM1802(comp);
@@ -68,12 +70,24 @@ extern (C) int UIAppMain(string[] args)
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
     emulScr.keyboard = kbd;
 
+    widget!("MEM_DUMP", StringGridWidget).resize(4, cast(int) emulScr.comp.mem.length / 4);
+    foreach(i; 0 .. 4)
+        widget!("MEM_DUMP", StringGridWidget).setColTitle(i, i.to!dstring);
+
+    foreach(int i; 0 .. cast(int) emulScr.comp.mem.length / 4)
+        widget!("MEM_DUMP", StringGridWidget).setRowTitle(i, format!dchar("%#06x", i*4));
+
     disp.onInterruptAction = &emulScr.remapVideo;
 
     void displayPauseState()
     {
         widget!"PAUSE".text = emulScr.isPaused ? "Run" : "Pause";
         widget!"STEP".enabled = emulScr.isPaused;
+
+        const m = comp.mem;
+        foreach(int row; 0 .. cast(int) m.length / 4)
+            foreach(int col; 0 .. 4)
+                widget!("MEM_DUMP", StringGridWidget).setCellText(col, row, format!dchar("%#06x", m[row * 4 + col]));
     }
 
     displayPauseState;
@@ -165,6 +179,8 @@ extern (C) int UIAppMain(string[] args)
         comp.load(scrFill);
     else
         emulScr.loadBinaryFile(args[1], true);
+
+    displayPauseState;
 
     emulScr.startClocking(sldr.position);
 
