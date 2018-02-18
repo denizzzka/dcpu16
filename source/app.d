@@ -20,8 +20,6 @@ extern (C) int UIAppMain(string[] args)
     window.mainWidget = parseML(q{
         VerticalLayout
         {
-            TextWidget { text: "DCPU-16 emulator"; fontSize: 150%; fontWeight: 800 }
-
             HorizontalLayout {
                 GroupBox { id: EMUL_SCREEN_GRP; text: "Screen" }
                 VerticalLayout {
@@ -228,7 +226,12 @@ class EmulatorScreenWidget : ImageWidget
     {
         super(id);
 
-        cdbuf = new ColorDrawBuf(X_PIXELS + borderWidth*2, Y_PIXELS + borderWidth*2);
+        {
+            cdbuf = new ColorDrawBuf(X_PIXELS + borderWidth*2, Y_PIXELS + borderWidth*2);
+            DrawBufRef b = cdbuf;
+            drawable = new ImageDrawable(b); // just for do not leaving it empty
+        }
+
         comp = c;
         display = d;
         onStepDg = onStep;
@@ -330,11 +333,6 @@ class EmulatorScreenWidget : ImageWidget
     // Widget is being animated
     override bool animating() { return true; }
 
-    // Animates. Here is nothing to do - all real work made in onDraw.
-    override void animate(long time) {
-        invalidate();
-    }
-
     private static uint makeRGBA(PaletteColor c) pure @property
     {
         import col = dlangui.graphics.colors;
@@ -350,6 +348,9 @@ class EmulatorScreenWidget : ImageWidget
     private void placeFrameToBuf()
     {
         // Border
+        // FIXME: for some reason it is need to recreate this buffer
+        // because otherwise OpenGL can't draw to it after first drawing
+        cdbuf = new ColorDrawBuf(X_PIXELS + borderWidth*2, Y_PIXELS + borderWidth*2);
         cdbuf.fillRect(Rect(0, 0, cdbuf.width, cdbuf.height), makeRGBA(display.getBorderColor));
 
         foreach(ubyte y; 0 .. Y_RESOLUTION)
@@ -377,13 +378,15 @@ class EmulatorScreenWidget : ImageWidget
 
     override void onDraw(DrawBuf buf)
     {
-        if(!visible)
+        if(visibility != Visibility.Visible)
             return;
 
         placeFrameToBuf();
 
         auto srcRect = Rect(0, 0, cdbuf.width, cdbuf.height);
         buf.drawRescaled(pos, cdbuf, srcRect);
+
+        _needDraw = false;
     }
 
     override void measure(int parentWidth, int parentHeight)
