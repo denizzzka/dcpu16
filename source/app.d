@@ -25,10 +25,19 @@ extern (C) int UIAppMain(string[] args)
             HorizontalLayout {
                 GroupBox { id: EMUL_SCREEN_GRP; text: "Screen" }
                 VerticalLayout {
-                    TextWidget { id: SPEED_INDICATOR; text: "<speed>"; fontSize: 100%; fontWeight: 800 }
-                    TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
-                    SliderWidget { id: CPU_SPEED; minWidth: 200 }
-                    StringGridWidget { id: MEM_DUMP; minWidth: 240; minHeight: 450 }
+                    GroupBox {
+                        text: "Step counter";
+                        TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
+                    }
+                    GroupBox {
+                        text: "Frequency";
+                        TextWidget { id: SPEED_INDICATOR; text: "<speed>"; fontSize: 100%; fontWeight: 800 }
+                        SliderWidget { id: CPU_SPEED; minWidth: 200 }
+                    }
+                    GroupBox {
+                        text: "Memory";
+                        StringGridWidget { id: MEM_DUMP; minWidth: 240; minHeight: 450 }
+                    }
                 }
             }
 
@@ -209,7 +218,6 @@ class EmulatorScreenWidget : ImageWidget
     bool isPaused = true;
 
     private ulong clockTimer;
-    private ulong screenDrawTimer;
     private ulong blinkingTimer;
     private void delegate() onStepDg;
     private void delegate(Dcpu16Exception) onExceptionDg;
@@ -233,6 +241,16 @@ class EmulatorScreenWidget : ImageWidget
         }
 
         loadFontBitmap;
+    }
+
+    ~this()
+    {
+        // To prevent DlangUI warnings:
+        destroy(cdbuf);
+        destroy(bgGlyph);
+
+        foreach(ref sym; font)
+            destroy(sym);
     }
 
     private uint numOfStepsPerTick;
@@ -268,7 +286,6 @@ class EmulatorScreenWidget : ImageWidget
     void startClocking(uint initialClockingFreq_Hz)
     {
         setCPUFreq(initialClockingFreq_Hz);
-        screenDrawTimer = setTimer(1000);
         blinkingTimer = setTimer(800);
     }
 
@@ -302,19 +319,20 @@ class EmulatorScreenWidget : ImageWidget
             if(!isPaused)
                 tick();
         }
-        else if(id == screenDrawTimer)
-        {
-            import dlangui.platforms.sdl.sdlapp;
-
-            //~ invalidate();
-            //~ (cast(SDLWindow)window).redraw();
-        }
         else if(id == blinkingTimer)
         {
             display.switchBlink();
         }
 
         return true;
+    }
+
+    // Widget is being animated
+    override bool animating() { return true; }
+
+    // Animates. Here is nothing to do - all real work made in onDraw.
+    override void animate(long time) {
+        invalidate();
     }
 
     private static uint makeRGBA(PaletteColor c) pure @property
@@ -346,11 +364,11 @@ class EmulatorScreenWidget : ImageWidget
                 if(sym.foreground != sym.background && visibility)
                 {
                     auto fg = makeRGBA(display.getColor(sym.foreground));
-
                     ColorTransform tr = { multiply: fg | 0xff000000 };
-                    auto fgGlyph = font[sym.character].transformColors(tr);
 
+                    auto fgGlyph = font[sym.character].transformColors(tr);
                     bgGlyph.drawImage(0, 0, fgGlyph);
+                    destroy(fgGlyph);
                 }
 
                 cdbuf.drawImage(x * CHAR_SIZE_X + borderWidth, y * CHAR_SIZE_Y + borderWidth, bgGlyph);
