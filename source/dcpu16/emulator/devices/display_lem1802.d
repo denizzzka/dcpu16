@@ -134,7 +134,7 @@ class LEM1802 : IDevice
         relativeY %= CHAR_SIZE_Y;
 
         auto ul = cast(ulong) bitArray[relativeX];
-        import core.bitop: bt;
+        //~ import core.bitop: bt;
         return bt(&ul, relativeY) != 0;
     }
     unittest
@@ -368,3 +368,19 @@ private immutable ushort[16] defaultPalette =
 	0x555, 0x55f, 0x5f5, 0x5ff,
 	0xf55, 0xf5f, 0xff5, 0xfff
 ];
+
+private int bt(in size_t* p, size_t bitnum) pure
+{
+    //~ // This function body is copied from core.bitop.bt and returns garbage if used in release binary
+    static if (size_t.sizeof == 8)
+        return ((p[bitnum >> 6] & (1L << (bitnum & 63)))) != 0;
+    else static if (size_t.sizeof == 4)
+        return ((p[bitnum >> 5] & (1  << (bitnum & 31)))) != 0;
+    else
+        static assert(0);
+}
+//~ {
+    //~ // This version works ok in release binary
+    //~ auto t = (*p) >>> bitnum;
+    //~ return t % 2; // parity check: LSB is 0 for even
+//~ }
