@@ -52,7 +52,7 @@ extern (C) int UIAppMain(string[] args)
 
     auto comp = new Computer;
     auto disp = new LEM1802(comp);
-    auto kbd = new Keyboard((ubyte){ return false; });
+    auto kbd = new Keyboard(comp, (ubyte){ return false; });
     comp.attachDevice = disp;
     comp.attachDevice = kbd;
 

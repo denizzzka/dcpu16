@@ -11,19 +11,25 @@ class Keyboard : IDevice
 
     private Computer comp;
     private ubyte[] buf;
-    private ubyte maxBufLength;
+    private size_t maxBufLength;
     private CheckKeyIsPressed checkKeyPressed;
+    private ushort interruptsMsg;
     private bool enableMemMapping;
 
     alias CheckKeyIsPressed = bool delegate(ubyte ascii_or_enum_Key);
 
-    this(CheckKeyIsPressed dg, bool enable0x9000Mapping = true, size_t keyBufferLength = 8)
+    this(Computer c, CheckKeyIsPressed dg, bool enable0x9000Mapping = true, size_t keyBufferLength = 8)
     {
+        comp = c;
+        checkKeyPressed = dg;
         enableMemMapping = enable0x9000Mapping;
+        maxBufLength = keyBufferLength;
     }
 
-    void handleHardwareInterrupt(Computer comp)
+    void handleHardwareInterrupt(in Computer _unused)
     {
+        assert(comp == _unused);
+
         with(InterruptActions)
         with(comp)
         with(cpu.regs)
@@ -54,7 +60,8 @@ class Keyboard : IDevice
                 return;
 
             case SET_INT:
-                assert(false);
+                interruptsMsg = comp.cpu.regs.B;
+                return;
 
             default:
                 break;
@@ -81,6 +88,9 @@ class Keyboard : IDevice
 
         if(buf.length <= maxBufLength)
             buf ~= ascii_or_enum_Key;
+
+        if(interruptsMsg)
+            comp.cpu.addInterruptOrBurnOut(interruptsMsg);
     }
 }
 
@@ -110,7 +120,7 @@ enum InterruptActions : ushort
     CLEAR_BUFFER,
     GET_NEXT,
     CHECK_KEY,
-    SET_INT,
+    SET_INT, /// If register B is non-zero, turn on interrupts with message B. If B is zero, disable interrupts.
 }
 
 enum Key : ubyte

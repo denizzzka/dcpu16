@@ -72,6 +72,14 @@ pure struct CPU
 
     void step()
     {
+        if(intQueue.isTriggeringEnabled && !intQueue.empty)
+        {
+            auto msg = intQueue.pop;
+
+            if(regs.ia)
+                regs.PC = regs.ia;
+        }
+
         Instruction ins = getCurrInstruction;
         regs.pc++;
         executeInstruction(ins);
@@ -314,6 +322,11 @@ pure struct CPU
         }
     }
 
+    void addInterruptOrBurnOut(ushort intMsg)
+    {
+        intQueue.addInterruptOrBurnOut(intMsg);
+    }
+
     string regsToString() const pure
     {
         import std.string;
@@ -344,7 +357,7 @@ pure struct CPU
 
 private struct InteruptQueue
 {
-    private ushort[] queue; //TODO: It should be replaced by a more faster mechanism
+    ushort[] queue; //TODO: It should be replaced by a more faster mechanism
     bool isTriggeringEnabled = true;
 
     bool addInterruptOrBurnOut(ushort msg) pure
@@ -357,9 +370,23 @@ private struct InteruptQueue
         return false;
     }
 
+    bool empty() const pure
+    {
+        return queue.length == 0;
+    }
+
+    ushort pop() pure
+    {
+        auto ret = queue[0];
+        queue = queue[1 .. $];
+
+        return ret;
+    }
+
     void reset() pure
     {
-        this = InteruptQueue();
+        queue.length = 0;
+        isTriggeringEnabled = true;
     }
 }
 
