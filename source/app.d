@@ -28,7 +28,7 @@ extern (C) int UIAppMain(string[] args)
                     TextWidget { id: SPEED_INDICATOR; text: "<speed>"; fontSize: 100%; fontWeight: 800 }
                     TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
                     SliderWidget { id: CPU_SPEED; minWidth: 200 }
-                    StringGridWidget { id: MEM_DUMP; minWidth: 300; minHeight: 600;  }
+                    StringGridWidget { id: MEM_DUMP; minWidth: 240; minHeight: 450 }
                 }
             }
 
@@ -83,19 +83,25 @@ extern (C) int UIAppMain(string[] args)
     {
         widget!"PAUSE".text = emulScr.isPaused ? "Run" : "Pause";
         widget!"STEP".enabled = emulScr.isPaused;
-
-        const m = comp.mem;
-        foreach(int row; 0 .. cast(int) m.length / 4)
-            foreach(int col; 0 .. 4)
-                widget!("MEM_DUMP", StringGridWidget).setCellText(col, row, format!dchar("%#06x", m[row * 4 + col]));
     }
 
     displayPauseState;
-    widget!("MEM_DUMP", StringGridWidget).autoFitColumnWidths;
+
+    void refreshMemDump()
+    {
+        const m = comp.mem;
+        foreach(int row; 0 .. cast(int) m.length / 4)
+            foreach(int col; 0 .. 4)
+                widget!("MEM_DUMP", StringGridWidget).setCellText(col, row, format!dchar("%04x", m[row * 4 + col]));
+    }
+
+    refreshMemDump;
+    widget!("MEM_DUMP", StringGridWidget).autoFit;
 
     widget!"PAUSE".addOnClickListener((Widget w) {
             emulScr.isPaused = !emulScr.isPaused;
             displayPauseState;
+            if(emulScr.isPaused) refreshMemDump;
             return true;
         });
 
@@ -113,6 +119,7 @@ extern (C) int UIAppMain(string[] args)
 
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
             emulScr.step;
+            refreshMemDump;
             comp.machineState.writeln;
             return true;
         });
@@ -181,7 +188,7 @@ extern (C) int UIAppMain(string[] args)
     else
         emulScr.loadBinaryFile(args[1], true);
 
-    displayPauseState;
+    refreshMemDump;
 
     emulScr.startClocking(sldr.position);
 
