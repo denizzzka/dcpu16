@@ -11,8 +11,7 @@ class Keyboard : IDevice
 
     private Computer comp;
     private ubyte[] buf;
-    private ubyte readIdx;
-    private ubyte writeIdx;
+    private ubyte maxBufLength;
     private CheckKeyIsPressed checkKeyPressed;
     private bool enableMemMapping;
 
@@ -21,7 +20,6 @@ class Keyboard : IDevice
     this(CheckKeyIsPressed dg, bool enable0x9000Mapping = true, size_t keyBufferLength = 8)
     {
         enableMemMapping = enable0x9000Mapping;
-        buf.length = keyBufferLength;
     }
 
     void handleHardwareInterrupt(Computer comp)
@@ -38,7 +36,16 @@ class Keyboard : IDevice
                 return;
 
             case GET_NEXT:
-                assert(false);
+                if(buf.length == 0)
+                {
+                    comp.cpu.regs.c = 0;
+                }
+                else
+                {
+                    comp.cpu.regs.c = buf[0];
+                    buf = buf[1 .. $];
+                }
+                return;
 
             case CHECK_KEY:
                 ubyte b = comp.cpu.regs.B & ubyte.max;
@@ -71,6 +78,9 @@ class Keyboard : IDevice
             if(mapIdx > 0x900e)
                 mapIdx = 0x9000;
         }
+
+        if(buf.length <= maxBufLength)
+            buf ~= ascii_or_enum_Key;
     }
 }
 
