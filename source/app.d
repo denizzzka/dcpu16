@@ -5,6 +5,8 @@ import dlangui.dialogs.dialog;
 mixin APP_ENTRY_POINT;
 
 import dcpu16.emulator;
+import dcpu16.emulator.devices.lem1802;
+import dcpu16.emulator.devices.keyboard;
 import dcpu16.emulator.exception: Dcpu16Exception;
 
 extern (C) int UIAppMain(string[] args)
@@ -46,8 +48,6 @@ extern (C) int UIAppMain(string[] args)
         return w;
     }
 
-    import dcpu16.emulator.devices.lem1802;
-    import dcpu16.emulator.devices.keyboard;
     import std.stdio;
 
     auto comp = new Computer;
@@ -66,6 +66,7 @@ extern (C) int UIAppMain(string[] args)
 
     auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp, &onStepDg);
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
+    emulScr.keyboard = kbd;
 
     disp.onInterruptAction = &emulScr.remapVideo;
 
@@ -174,14 +175,13 @@ extern (C) int UIAppMain(string[] args)
     return Platform.instance.enterMessageLoop();
 }
 
-import dcpu16.emulator.devices.lem1802;
-
 class EmulatorScreenWidget : ImageWidget
 {
     enum borderWidth = 4;
     private ColorDrawBuf cdbuf;
     private Computer comp;
     private LEM1802 display;
+    Keyboard keyboard;
     bool isPaused = true;
 
     private ulong clockTimer;
@@ -380,5 +380,25 @@ class EmulatorScreenWidget : ImageWidget
     {
         if(ia == InterruptAction.MEM_MAP_FONT)
             loadFontBitmap;
+    }
+
+    override bool wantsKeyTracking() { return true; }
+
+    override bool onKeyEvent(KeyEvent e)
+    {
+        if(e.action == KeyAction.Text)
+        {
+            // Numbers and capital letters
+            if(e.action >= 0x30 && e.action <= 0x5a)
+            {
+                keyboard.keyPressed(cast(ubyte) e.action);
+            }
+
+            import dlangui.core.logger;
+            import std.conv;
+            Log.d("================ key event"~e.to!string);
+        }
+
+        return true;
     }
 }

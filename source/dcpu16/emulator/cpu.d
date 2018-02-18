@@ -224,7 +224,7 @@ pure struct CPU
         switch(ins.spec_opcode)
         {
             case JSR: push(pc); pc = a; return;
-            case INT: isBurning = intQueue.addInterruptOrBurnOut(a); return;
+            case INT: addInterruptOrBurnOut(a); return;
             case IAG: a = ia; break;
             case IAS: ia = a; return;
             case RFI:
@@ -324,7 +324,10 @@ pure struct CPU
 
     void addInterruptOrBurnOut(ushort intMsg)
     {
-        intQueue.addInterruptOrBurnOut(intMsg);
+        isBurning = intQueue.addInterruptOrBurnOut(intMsg);
+
+        if(isBurning)
+            throw new Dcpu16Exception("CPU is burning!", computer, __FILE__, __LINE__);
     }
 
     string regsToString() const pure
