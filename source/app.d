@@ -71,8 +71,7 @@ extern (C) int UIAppMain(string[] args)
     emulScr.keyboard = kbd;
 
     widget!("MEM_DUMP", StringGridWidget).resize(4, cast(int) emulScr.comp.mem.length / 4);
-    foreach(i; 0 .. 4)
-        widget!("MEM_DUMP", StringGridWidget).setColTitle(i, i.to!dstring);
+    widget!("MEM_DUMP", StringGridWidget).showColHeaders = false;
 
     foreach(int i; 0 .. cast(int) emulScr.comp.mem.length / 4)
         widget!("MEM_DUMP", StringGridWidget).setRowTitle(i, format!dchar("%#06x", i*4));
@@ -83,6 +82,7 @@ extern (C) int UIAppMain(string[] args)
     {
         widget!"PAUSE".text = emulScr.isPaused ? "Run" : "Pause";
         widget!"STEP".enabled = emulScr.isPaused;
+        widget!"MEM_DUMP".visibility = emulScr.isPaused ? Visibility.Visible : Visibility.Invisible;
     }
 
     displayPauseState;
