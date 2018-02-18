@@ -412,15 +412,18 @@ class EmulatorScreenWidget : ImageWidget
     {
         if(e.action == KeyAction.Text)
         {
-            // Numbers and capital letters
-            if(e.action >= 0x30 && e.action <= 0x5a)
-            {
-                keyboard.keyPressed(cast(ubyte) e.action);
-            }
-
             import dlangui.core.logger;
             import std.conv;
             Log.d("================ key event"~e.to!string);
+
+            char code = e.text[0].to!string[0]; //FIXME: wtf?!
+
+            // Numbers and capital letters
+            if(code >= 0x30 && code <= 0x5a)
+            {
+                Log.d(">>>>> key pressed"~e.to!string);
+                keyboard.keyPressed(code);
+            }
         }
 
         return true;
