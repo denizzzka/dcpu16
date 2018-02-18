@@ -220,7 +220,6 @@ class EmulatorScreenWidget : ImageWidget
     private void delegate() onStepDg;
     private void delegate(Dcpu16Exception) onExceptionDg;
     private ColorDrawBuf[128] font;
-    private ColorDrawBuf bgGlyph;
 
     this(string id, Computer c, LEM1802 d, void delegate() onStep)
     {
@@ -235,7 +234,6 @@ class EmulatorScreenWidget : ImageWidget
         comp = c;
         display = d;
         onStepDg = onStep;
-        bgGlyph = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
 
         foreach(ref sym; font)
         {
@@ -250,7 +248,6 @@ class EmulatorScreenWidget : ImageWidget
     {
         // To prevent DlangUI warnings:
         destroy(cdbuf);
-        destroy(bgGlyph);
 
         foreach(ref sym; font)
             destroy(sym);
@@ -348,7 +345,7 @@ class EmulatorScreenWidget : ImageWidget
     private void placeFrameToBuf()
     {
         // Border
-        // FIXME: recreation need: OpenGL can't draw it after first drawing because caching
+        // Recreation is need: OpenGL can't draw it after first drawing because caching
         cdbuf = new ColorDrawBuf(X_PIXELS + borderWidth*2, Y_PIXELS + borderWidth*2);
         cdbuf.fill(makeRGBA(display.getBorderColor));
 
@@ -359,6 +356,7 @@ class EmulatorScreenWidget : ImageWidget
                 bool visibility = !sym.blinking || display.isBlinkingVisible;
                 auto bg = makeRGBA(display.getColor(sym.background));
 
+                auto bgGlyph = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
                 bgGlyph.fill(bg);
 
                 if(sym.foreground != sym.background && visibility)
@@ -372,6 +370,8 @@ class EmulatorScreenWidget : ImageWidget
                 }
 
                 cdbuf.drawImage(x * CHAR_SIZE_X + borderWidth, y * CHAR_SIZE_Y + borderWidth, bgGlyph);
+
+                destroy(bgGlyph);
             }
     }
 

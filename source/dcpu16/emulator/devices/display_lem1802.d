@@ -119,7 +119,6 @@ class LEM1802 : IDevice
         {
             ushort[2] for_ctor;
             ubyte[4] ub_arr;
-            alias ub_arr this;
 
             this(ushort[2] from) pure
             {
@@ -133,9 +132,10 @@ class LEM1802 : IDevice
         auto bitArray = CharBitArray(symbolBitmap);
         relativeY %= CHAR_SIZE_Y;
 
-        auto ul = cast(ulong) bitArray[relativeX];
-        import core.bitop: bt;
-        return bt(&ul, relativeY) != 0;
+        assert(relativeY < 8);
+
+        ubyte ul = bitArray.ub_arr[relativeX];
+        return bt(ul, cast(ubyte) relativeY) != 0;
     }
     unittest
     {
@@ -368,3 +368,13 @@ private immutable ushort[16] defaultPalette =
 	0x555, 0x55f, 0x5f5, 0x5ff,
 	0xf55, 0xf5f, 0xff5, 0xfff
 ];
+
+// TODO: Phobos core.bitop.bt is glitches in release versions, so I made my own
+/// Checks bit
+private bool bt(ubyte value, ubyte bit) pure
+{
+    assert(bit < 8);
+
+    auto t = value >>> bit;
+    return t % 2 != 0;
+}
