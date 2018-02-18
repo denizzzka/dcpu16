@@ -91,6 +91,7 @@ extern (C) int UIAppMain(string[] args)
     }
 
     displayPauseState;
+    widget!("MEM_DUMP", StringGridWidget).autoFitColumnWidths;
 
     widget!"PAUSE".addOnClickListener((Widget w) {
             emulScr.isPaused = !emulScr.isPaused;
