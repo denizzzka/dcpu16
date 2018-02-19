@@ -337,7 +337,12 @@ class EmulatorScreenWidget : ImageWidget
                 static ubyte cyclesRemaining;
 
                 if(cyclesRemaining == 0)
+                {
                     cyclesRemaining = step();
+
+                    if(comp.cpu.regs.ds != 0) // breakpoint check
+                        isPaused = true;
+                }
                 else // bogus clock cycle
                     cyclesRemaining--;
             }
