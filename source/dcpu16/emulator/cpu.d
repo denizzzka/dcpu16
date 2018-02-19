@@ -448,6 +448,22 @@ enum SpecialOpcode : ubyte
     HWI, /// sends an interrupt to hardware a
 }
 
+private immutable byte[] opcodesCyclesCost =
+[
+    -1, // erroneous cost for special instruction
+    1, // SET
+    2, 2, 2, 2, // addition and multiplication
+    3, 3, 3, 3, // division
+    1, 1, 1, 1, 1, 1, // bit manipulation
+    2, 2, 2, 2, 2, 2, 2, 2, // conditional branching
+    -1, -1, // unused opcodes
+    3, 3, // ADX and SBX
+    -1, -1, // unused opcodes
+    2,  2, // STI and STD
+];
+
+static assert(opcodesCyclesCost.length == Opcode.STD + 1);
+
 struct Instruction
 {
     union
