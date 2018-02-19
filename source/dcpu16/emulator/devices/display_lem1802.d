@@ -86,6 +86,7 @@ class LEM1802 : IDevice
     const(Symbol) getSymbol(size_t idx) const
     {
         assert(idx < 386);
+        assert(!isSplashDisplayed);
 
         return Symbol(screen[idx]);
     }
@@ -99,6 +100,8 @@ class LEM1802 : IDevice
 
     bool getPixel(uint x, uint y) const
     {
+        assert(!isSplashDisplayed);
+
         auto symbolX = x / CHAR_SIZE_X;
         auto symbolY = y / CHAR_SIZE_Y;
 
@@ -173,6 +176,8 @@ class LEM1802 : IDevice
 
     void forEachPixel(void delegate(ubyte x, ubyte y, PaletteColor c) dg) const
     {
+        assert(!isSplashDisplayed);
+
         for(ubyte y = 0; y < Y_RESOLUTION * CHAR_SIZE_Y; y++)
         {
             for(ubyte x = 0; x < X_RESOLUTION * CHAR_SIZE_X; x++)
@@ -233,6 +238,24 @@ class LEM1802 : IDevice
     void switchBlink()
     {
         isBlinkingVisible = !isBlinkingVisible;
+    }
+
+    private long splashTimeRemaining = 10_000_000; // hnsecs, 1 second
+
+    void splashClock(long interval)
+    {
+        if(splashTimeRemaining > 0)
+            splashTimeRemaining -= interval;
+    }
+
+    bool isSplashDisplayed() const pure
+    {
+        return splashTimeRemaining > 0;
+    }
+
+    void forEachSplashPixel(void delegate(ubyte x, ubyte y, PaletteColor c)) const pure
+    {
+        assert(isSplashDisplayed);
     }
 }
 
@@ -369,6 +392,8 @@ private immutable ushort[16] defaultPalette =
 	0x555, 0x55f, 0x5f5, 0x5ff,
 	0xf55, 0xf5f, 0xff5, 0xfff
 ];
+
+private immutable nyaResearchLtd = cast(immutable ubyte[]) import("splash_string.data");
 
 // TODO: Phobos core.bitop.bt is glitches in release versions, so I made my own
 /// Checks bit

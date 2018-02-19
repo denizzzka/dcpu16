@@ -349,6 +349,8 @@ class EmulatorScreenWidget : ImageWidget
             foreach(_; 0 .. ticks)
                 tick();
         }
+
+        display.splashClock(interval);
     }
 
     private static uint makeRGBA(PaletteColor c) pure @property
@@ -369,6 +371,12 @@ class EmulatorScreenWidget : ImageWidget
         // Recreation is need: OpenGL can't draw it after first drawing because caching
         cdbuf = new ColorDrawBuf(X_PIXELS + borderWidth*2, Y_PIXELS + borderWidth*2);
         cdbuf.fill(makeRGBA(display.getBorderColor));
+
+        //~ if(display.isSplashDisplayed)
+        //~ {
+            //~ placeSplashToBuf;
+            //~ return
+        //~ }
 
         foreach(ubyte y; 0 .. Y_RESOLUTION)
             foreach(ubyte x; 0 .. X_RESOLUTION)
@@ -395,6 +403,15 @@ class EmulatorScreenWidget : ImageWidget
                 cdbuf.drawImage(x * CHAR_SIZE_X + borderWidth, y * CHAR_SIZE_Y + borderWidth, bgGlyph);
 
                 destroy(bgGlyph);
+            }
+    }
+
+    private void placeSplashToBuf()
+    {
+        foreach(ubyte y; 0 .. Y_PIXELS)
+            foreach(ubyte x; 0 .. X_PIXELS)
+            {
+                //~ bool forEachSplashPixel(x, y);
             }
     }
 
