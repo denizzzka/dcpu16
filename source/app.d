@@ -80,11 +80,13 @@ extern (C) int UIAppMain(string[] args)
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
     emulScr.keyboard = kbd;
 
-    widget!("MEM_DUMP", StringGridWidget).resize(4, cast(int) emulScr.comp.mem.length / 4);
+    enum memDumpColNum = 4;
+
+    widget!("MEM_DUMP", StringGridWidget).resize(memDumpColNum, cast(int) emulScr.comp.mem.length / memDumpColNum);
     widget!("MEM_DUMP", StringGridWidget).showColHeaders = false;
 
-    foreach(int i; 0 .. cast(int) emulScr.comp.mem.length / 4)
-        widget!("MEM_DUMP", StringGridWidget).setRowTitle(i, format!dchar("%#06x", i*4));
+    foreach(int i; 0 .. cast(int) emulScr.comp.mem.length / memDumpColNum)
+        widget!("MEM_DUMP", StringGridWidget).setRowTitle(i, format!dchar("%#06x", i * memDumpColNum));
 
     disp.onInterruptAction = &emulScr.remapVideo;
 
@@ -101,9 +103,9 @@ extern (C) int UIAppMain(string[] args)
     void refreshMemDump()
     {
         const m = comp.mem;
-        foreach(int row; 0 .. cast(int) m.length / 4)
-            foreach(int col; 0 .. 4)
-                widget!("MEM_DUMP", StringGridWidget).setCellText(col, row, format!dchar("%04x", m[row * 4 + col]));
+        foreach(int row; 0 .. cast(int) m.length / memDumpColNum)
+            foreach(int col; 0 .. memDumpColNum)
+                widget!("MEM_DUMP", StringGridWidget).setCellText(col, row, format!dchar("%04x", m[row * memDumpColNum + col]));
     }
 
     refreshMemDump;
