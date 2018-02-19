@@ -321,7 +321,7 @@ pure struct CPU
                 cost++;
                 return &mem[ *decodeRegisterOfOperand(operand & 7) + mem[regs.pc++] ];
 
-            case 0x18: // PUSH / POP
+            case 0x18: // POP / PUSH
                 return isA ? &mem[sp++] : &mem[--sp];
 
             case 0x19: // PEEK

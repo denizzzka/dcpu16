@@ -38,7 +38,7 @@ private string explainOperand(in Memory mem, ref ushort pc, ushort operand, bool
             return "["~explainRegisterOfOperand(operand & 7)~" + "~mem[pc+1].fmt~"]";
 
         case 0x18:
-            return isA ? "PUSH" : "POP";
+            return isA ? "POP" : "PUSH";
 
         case 0x19:
             return "PEEK";
