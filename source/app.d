@@ -23,9 +23,15 @@ extern (C) int UIAppMain(string[] args)
             HorizontalLayout {
                 GroupBox { id: EMUL_SCREEN_GRP; text: "Screen" }
                 VerticalLayout {
-                    GroupBox {
-                        text: "Step counter";
-                        TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
+                    HorizontalLayout {
+                        GroupBox {
+                            text: "Step counter";
+                            TextWidget { id: STEP_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
+                        }
+                        GroupBox {
+                            text: "Clock counter";
+                            TextWidget { id: CLOCK_NUM_INDICATOR; text: "0"; fontSize: 100%; fontWeight: 800 }
+                        }
                     }
                     GroupBox {
                         text: "Frequency";
@@ -65,15 +71,7 @@ extern (C) int UIAppMain(string[] args)
     comp.attachDevice = disp;
     comp.attachDevice = kbd;
 
-    long clockingCounter;
-
-    void onStepDg()
-    {
-        clockingCounter++;
-        widget!"CLOCK_NUM_INDICATOR".text = clockingCounter.to!dstring;
-    }
-
-    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp, &onStepDg);
+    auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp);
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
     emulScr.keyboard = kbd;
 
@@ -105,6 +103,15 @@ extern (C) int UIAppMain(string[] args)
     refreshMemDump;
     widget!("MEM_DUMP", StringGridWidget).autoFit;
 
+    void refreshClock()
+    {
+        widget!"STEP_NUM_INDICATOR".text = emulScr.stepCounter.to!dstring;
+        widget!"CLOCK_NUM_INDICATOR".text = emulScr.clockCounter.to!dstring;
+    }
+
+    refreshClock;
+    emulScr.onClockSignal = &refreshClock;
+
     widget!"PAUSE".addOnClickListener((Widget w) {
             emulScr.isPaused = !emulScr.isPaused;
             displayPauseState;
@@ -125,7 +132,8 @@ extern (C) int UIAppMain(string[] args)
     };
 
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
-            emulScr.step;
+            emulScr.step();
+            refreshClock;
             refreshMemDump;
             comp.machineState.writeln;
             return true;
@@ -214,14 +222,16 @@ class EmulatorScreenWidget : ImageWidget
     private LEM1802 display;
     Keyboard keyboard;
     bool isPaused = true;
+    long stepCounter;
+    long clockCounter;
 
     private ulong clockTimer;
     private ulong blinkingTimer;
-    private void delegate() onStepDg;
+    private void delegate() onClockSignal;
     private void delegate(Dcpu16Exception) onExceptionDg;
     private ColorDrawBuf[128] font;
 
-    this(string id, Computer c, LEM1802 d, void delegate() onStep)
+    this(string id, Computer c, LEM1802 d)
     {
         super(id);
 
@@ -233,7 +243,6 @@ class EmulatorScreenWidget : ImageWidget
 
         comp = c;
         display = d;
-        onStepDg = onStep;
 
         foreach(ref sym; font)
         {
@@ -294,7 +303,17 @@ class EmulatorScreenWidget : ImageWidget
         try
         {
             foreach(_; 0 .. numOfStepsPerTick)
-                step;
+            {
+                assert(onClockSignal !is null);
+                onClockSignal();
+
+                static ubyte cyclesRemaining;
+
+                if(cyclesRemaining == 0)
+                    cyclesRemaining = step();
+                else // bogus clock cycle
+                    cyclesRemaining--;
+            }
         }
         catch(Dcpu16Exception e)
         {
@@ -303,13 +322,15 @@ class EmulatorScreenWidget : ImageWidget
         }
     }
 
-    void step()
+    ubyte step()
     {
         import dcpu16.emulator.exception;
 
-        onStepDg();
+        stepCounter++;
+        auto cycles = comp.cpu.step();
+        clockCounter += cycles;
 
-        comp.cpu.step;
+        return cycles;
     }
 
     override bool onTimer(ulong id)
