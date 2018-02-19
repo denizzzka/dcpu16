@@ -598,14 +598,15 @@ pure unittest
     cpu.regs.x = 123;
     comp.mem[123] = 456;
 
+    byte cost;
     ushort b1 = 0x03;
     ushort b2 = 0x0b;
-    assert(*cpu.decodeOperand(b1, false) == 123, "1");
-    assert(*cpu.decodeOperand(b2, false) == 456, "2");
+    assert(*cpu.decodeOperand(b1, false, cost) == 123, "1");
+    assert(*cpu.decodeOperand(b2, false, cost) == 456, "2");
 
     // literal values:
     ushort a1 = 0x20;
     ushort a2 = 0x3f;
-    assert(*cpu.decodeOperand(a1, true) == cast(ushort) -1);
-    assert(*cpu.decodeOperand(a2, true) == 30);
+    assert(*cpu.decodeOperand(a1, true, cost) == cast(ushort) -1);
+    assert(*cpu.decodeOperand(a2, true, cost) == 30);
 }
