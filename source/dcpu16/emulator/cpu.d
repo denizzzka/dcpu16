@@ -70,7 +70,8 @@ pure struct CPU
         intQueue.reset;
     }
 
-    void step()
+    /// Returns: clock cycles cost of executed step
+    ubyte step()
     {
         if(intQueue.isTriggeringEnabled && !intQueue.empty)
         {
@@ -82,8 +83,10 @@ pure struct CPU
 
         Instruction ins = getCurrInstruction;
         regs.pc++;
-        executeInstruction(ins);
+        ubyte cycles = executeInstruction(ins);
         regs.PC = regs.pc;
+
+        return cycles;
     }
 
     Instruction getCurrInstruction() const pure
@@ -92,7 +95,7 @@ pure struct CPU
     }
 
     /// Returns: clock cycles cost of executed instruction
-    private byte executeInstruction(in Instruction ins)
+    private ubyte executeInstruction(in Instruction ins)
     {
         byte cost;
 
