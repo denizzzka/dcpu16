@@ -84,16 +84,16 @@ pure struct CPU
                 regs.PC = regs.ia;
         }
 
+        Instruction ins = getCurrInstruction;
+        regs.pc++;
+        ubyte cycles = executeInstruction(ins);
+        regs.PC = regs.pc;
+
         version(CPUDebuggingMethods)
         {
             if(testBreakpoint(regs.PC))
                 regs.ds |= 1;
         }
-
-        Instruction ins = getCurrInstruction;
-        regs.pc++;
-        ubyte cycles = executeInstruction(ins);
-        regs.PC = regs.pc;
 
         return cycles;
     }
