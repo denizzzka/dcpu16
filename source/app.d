@@ -118,7 +118,7 @@ extern (C) int UIAppMain(string[] args)
     }
 
     refreshClock;
-    emulScr.onClockSignal = &refreshClock;
+    emulScr.onScreenDraw = &refreshClock;
 
     widget!"PAUSE".addOnClickListener((Widget w) {
             emulScr.paused = !emulScr.paused;
@@ -253,9 +253,8 @@ class EmulatorScreenWidget : ImageWidget
     private bool _paused = true;
     private ulong clockTimer;
     private ulong blinkingTimer;
-    private void delegate() onClockSignal;
+    private void delegate() onScreenDraw;
     private void delegate(Dcpu16Exception) onExceptionDg;
-    private ColorDrawBuf[128] font;
 
     this(string id, Computer c, LEM1802 d)
     {
@@ -269,15 +268,6 @@ class EmulatorScreenWidget : ImageWidget
 
         comp = c;
         display = d;
-    }
-
-    ~this()
-    {
-        // To prevent DlangUI warnings:
-        destroy(cdbuf);
-
-        foreach(ref sym; font)
-            destroy(sym);
     }
 
     bool paused() const { return _paused; }
@@ -330,9 +320,6 @@ class EmulatorScreenWidget : ImageWidget
         {
             foreach(_; 0 .. numOfStepsPerTick)
             {
-                assert(onClockSignal !is null);
-                onClockSignal();
-
                 static ubyte cyclesRemaining;
 
                 if(cyclesRemaining == 0)
@@ -382,17 +369,6 @@ class EmulatorScreenWidget : ImageWidget
         return true;
     }
 
-    // Widget is being animated
-    override bool animating() { return true; }
-
-    /// animates window; interval is time left from previous draw, in hnsecs (1/10000000 of second)
-    override void animate(long timeLeft)
-    {
-        //                       1000 mills 1/4 of second
-        if(timeLeft > 10_000_000 / 10_000 / 250)
-            placeFrameToBuf();
-    }
-
     private static uint makeRGBA(PaletteColor c) pure @property
     {
         import col = dlangui.graphics.colors;
@@ -427,9 +403,11 @@ class EmulatorScreenWidget : ImageWidget
                     auto fg = makeRGBA(display.getColor(sym.foreground));
                     ColorTransform tr = { multiply: fg | 0xff000000 };
 
-                    auto fgGlyph = getSymbolDrawBuf(sym.character).transformColors(tr);
+                    auto symbolImage = getSymbolDrawBuf(sym.character);
+                    auto fgGlyph = symbolImage.transformColors(tr);
                     bgGlyph.drawImage(0, 0, fgGlyph);
                     destroy(fgGlyph);
+                    destroy(symbolImage);
                 }
 
                 cdbuf.drawImage(x * CHAR_SIZE_X + borderWidth, y * CHAR_SIZE_Y + borderWidth, bgGlyph);
@@ -440,11 +418,17 @@ class EmulatorScreenWidget : ImageWidget
 
     override void onDraw(DrawBuf buf)
     {
+        assert(onScreenDraw !is null);
+        onScreenDraw();
+
         if(visibility != Visibility.Visible)
             return;
 
+        placeFrameToBuf();
+
         auto srcRect = Rect(0, 0, cdbuf.width, cdbuf.height);
         buf.drawRescaled(pos, cdbuf, srcRect);
+        destroy(cdbuf);
 
         _needDraw = false;
     }
