@@ -155,7 +155,7 @@ extern (C) int UIAppMain(string[] args)
 
     auto sldr = cast(SliderWidget) window.mainWidget.childById("CPU_SPEED");
     sldr.minValue = 1;
-    sldr.maxValue = 100_001;
+    sldr.maxValue = 200_001;
     sldr.position = 100;
 
     void displayCPUSpeed()
