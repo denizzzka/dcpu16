@@ -90,12 +90,13 @@ extern (C) int UIAppMain(string[] args)
 
     void displayPauseState()
     {
-        widget!"PAUSE".text = emulScr.isPaused ? "Run" : "Pause";
-        widget!"STEP".enabled = emulScr.isPaused;
-        widget!"MEM_DUMP".visibility = emulScr.isPaused ? Visibility.Visible : Visibility.Invisible;
+        widget!"PAUSE".text = emulScr.paused ? "Run" : "Pause";
+        widget!"STEP".enabled = emulScr.paused;
+        widget!"MEM_DUMP".visibility = emulScr.paused ? Visibility.Visible : Visibility.Invisible;
     }
 
     displayPauseState;
+    emulScr.onPauseStateChanged = &displayPauseState;
 
     void refreshMemDump()
     {
@@ -118,9 +119,8 @@ extern (C) int UIAppMain(string[] args)
     emulScr.onClockSignal = &refreshClock;
 
     widget!"PAUSE".addOnClickListener((Widget w) {
-            emulScr.isPaused = !emulScr.isPaused;
-            displayPauseState;
-            if(emulScr.isPaused) refreshMemDump;
+            emulScr.paused = !emulScr.paused;
+            if(emulScr.paused) refreshMemDump;
             return true;
         });
 
@@ -129,11 +129,8 @@ extern (C) int UIAppMain(string[] args)
         import std.stdio;
         e.msg.writeln;
 
-        if(!emulScr.isPaused)
-        {
-            emulScr.isPaused = true;
-            displayPauseState;
-        }
+        if(!emulScr.paused)
+            emulScr.paused = true;
     };
 
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
@@ -248,10 +245,11 @@ class EmulatorScreenWidget : ImageWidget
     private Computer comp;
     private LEM1802 display;
     Keyboard keyboard;
-    bool isPaused = true;
     long stepCounter;
     long clockCounter;
+    void delegate() onPauseStateChanged;
 
+    private bool _paused = true;
     private ulong clockTimer;
     private ulong blinkingTimer;
     private void delegate() onClockSignal;
@@ -287,6 +285,14 @@ class EmulatorScreenWidget : ImageWidget
 
         foreach(ref sym; font)
             destroy(sym);
+    }
+
+    bool paused() const { return _paused; }
+    void paused(bool state)
+    {
+        _paused = state;
+
+        if(onPauseStateChanged) onPauseStateChanged();
     }
 
     private uint numOfStepsPerTick;
@@ -341,7 +347,11 @@ class EmulatorScreenWidget : ImageWidget
                     cyclesRemaining = step();
 
                     if(comp.cpu.regs.ds != 0) // breakpoint check
-                        isPaused = true;
+                    {
+                        paused = true;
+                        comp.machineState.writeln;
+                        comp.cpu.regs.ds = 0;
+                    }
                 }
                 else // bogus clock cycle
                     cyclesRemaining--;
@@ -369,7 +379,7 @@ class EmulatorScreenWidget : ImageWidget
     {
         if(id == clockTimer)
         {
-            if(!isPaused)
+            if(!paused)
                 tick();
         }
         else if(id == blinkingTimer)
