@@ -11,8 +11,6 @@ unittest
 
     foreach(_; 0 .. 4000)
     {
-        //~ import std.stdio;
-        //~ comp.machineState.writeln;
         comp.cpu.step;
     }
 }
@@ -40,14 +38,20 @@ unittest
     auto comp = new Computer();
     comp.load(blob, true);
 
-    foreach(_; 0 .. 4000)
+    const etalon = comp.mem[0x01 .. 0x19];
+
+    foreach(_; 0 .. 1000)
     {
-        //~ import std.stdio;
-        //~ comp.machineState.writeln;
-        //~ comp.cpu.step;
+        comp.cpu.step;
     }
 
     import std.algorithm.comparison;
 
-    //~ assert(equal(comp.mem[0 .. blob.length], comp.mem[blob.length .. blob.length*2]));
+    foreach(n; 0 .. 8)
+    {
+        size_t offset = 1 + (etalon.length-1) * n;
+        const copy = comp.mem[offset .. offset + etalon.length];
+
+        assert(equal(etalon, copy));
+    }
 }

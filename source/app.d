@@ -90,16 +90,6 @@ extern (C) int UIAppMain(string[] args)
 
     disp.onInterruptAction = &emulScr.remapVideo;
 
-    void displayPauseState()
-    {
-        widget!"PAUSE".text = emulScr.paused ? "Run" : "Pause";
-        widget!"STEP".enabled = emulScr.paused;
-        widget!"MEM_DUMP".visibility = emulScr.paused ? Visibility.Visible : Visibility.Invisible;
-    }
-
-    displayPauseState;
-    emulScr.onPauseStateChanged = &displayPauseState;
-
     void refreshMemDump()
     {
         const m = comp.mem;
@@ -110,6 +100,18 @@ extern (C) int UIAppMain(string[] args)
 
     refreshMemDump;
     widget!("MEM_DUMP", StringGridWidget).autoFit;
+
+    void displayPauseState()
+    {
+        widget!"PAUSE".text = emulScr.paused ? "Run" : "Pause";
+        widget!"STEP".enabled = emulScr.paused;
+        widget!"MEM_DUMP".visibility = emulScr.paused ? Visibility.Visible : Visibility.Invisible;
+
+        if(emulScr.paused) refreshMemDump;
+    }
+
+    displayPauseState;
+    emulScr.onPauseStateChanged = &displayPauseState;
 
     void refreshClock()
     {
@@ -122,7 +124,6 @@ extern (C) int UIAppMain(string[] args)
 
     widget!"PAUSE".addOnClickListener((Widget w) {
             emulScr.paused = !emulScr.paused;
-            if(emulScr.paused) refreshMemDump;
             return true;
         });
 
