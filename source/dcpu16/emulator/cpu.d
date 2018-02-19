@@ -235,7 +235,7 @@ pure struct CPU
             (o & 0b11000) == 0b10000; // [some_register + next word]
     }
 
-    private void performSpecialInstruction(in Instruction ins, byte cost)
+    private void performSpecialInstruction(in Instruction ins, out byte cost)
     {
         scope(success)
         {
