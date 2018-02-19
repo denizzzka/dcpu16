@@ -24,7 +24,7 @@ struct Registers
     private ushort _pc; /// program counter available for users through getter/setter
     ushort ex; /// extra/excess
     ushort ia; /// interrupt address
-    version(CPUDebuggingMethods) ds; /// debug status
+    version(CPUDebuggingMethods) ushort ds; /// debug status
 
     /// program counter register
     ushort PC() const pure @property { return _pc; }
