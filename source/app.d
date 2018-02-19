@@ -135,7 +135,7 @@ extern (C) int UIAppMain(string[] args)
     };
 
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
-            emulScr.step();
+            emulScr.clockCounter += emulScr.step();
             refreshClock;
             refreshMemDump;
             comp.machineState.writeln;
@@ -346,8 +346,9 @@ class EmulatorScreenWidget : ImageWidget
                         comp.cpu.regs.ds = 0;
                     }
                 }
-                else // bogus clock cycle
-                    cyclesRemaining--;
+
+                cyclesRemaining--;
+                clockCounter++;
             }
         }
         catch(Dcpu16Exception e)
@@ -362,10 +363,8 @@ class EmulatorScreenWidget : ImageWidget
         import dcpu16.emulator.exception;
 
         stepCounter++;
-        auto cycles = comp.cpu.step();
-        clockCounter += cycles;
 
-        return cycles;
+        return comp.cpu.step();
     }
 
     override bool onTimer(ulong id)
@@ -385,6 +384,14 @@ class EmulatorScreenWidget : ImageWidget
 
     // Widget is being animated
     override bool animating() { return true; }
+
+    /// animates window; interval is time left from previous draw, in hnsecs (1/10000000 of second)
+    override void animate(long timeLeft)
+    {
+        //                       1000 mills 1/4 of second
+        if(timeLeft > 10_000_000 / 10_000 / 250)
+            placeFrameToBuf();
+    }
 
     private static uint makeRGBA(PaletteColor c) pure @property
     {
@@ -435,8 +442,6 @@ class EmulatorScreenWidget : ImageWidget
     {
         if(visibility != Visibility.Visible)
             return;
-
-        placeFrameToBuf();
 
         auto srcRect = Rect(0, 0, cdbuf.width, cdbuf.height);
         buf.drawRescaled(pos, cdbuf, srcRect);
