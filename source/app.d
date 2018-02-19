@@ -88,8 +88,6 @@ extern (C) int UIAppMain(string[] args)
     foreach(int i; 0 .. cast(int) emulScr.comp.mem.length / memDumpColNum)
         widget!("MEM_DUMP", StringGridWidget).setRowTitle(i, format!dchar("%#06x", i * memDumpColNum));
 
-    disp.onInterruptAction = &emulScr.remapVideo;
-
     void refreshMemDump()
     {
         const m = comp.mem;
@@ -271,14 +269,6 @@ class EmulatorScreenWidget : ImageWidget
 
         comp = c;
         display = d;
-
-        foreach(ref sym; font)
-        {
-            sym = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
-            sym.fill(0xff00ff00);
-        }
-
-        loadFontBitmap;
     }
 
     ~this()
@@ -430,7 +420,7 @@ class EmulatorScreenWidget : ImageWidget
                     auto fg = makeRGBA(display.getColor(sym.foreground));
                     ColorTransform tr = { multiply: fg | 0xff000000 };
 
-                    auto fgGlyph = font[sym.character].transformColors(tr);
+                    auto fgGlyph = getSymbolDrawBuf(sym.character).transformColors(tr);
                     bgGlyph.drawImage(0, 0, fgGlyph);
                     destroy(fgGlyph);
                 }
@@ -467,29 +457,25 @@ class EmulatorScreenWidget : ImageWidget
         comp.load(blob, wrongEndianness);
     }
 
-    private void loadFontBitmap()
+    private ColorDrawBuf getSymbolDrawBuf(ubyte character)
     {
-        foreach(ubyte i, ref sym; font)
+        auto ret = new ColorDrawBuf(CHAR_SIZE_X, CHAR_SIZE_Y);
+        ret.fill(0xff00ff00);
+
+        LEM1802.SymbolBitmap b = display.getSymbolBitmap(character);
+
+        foreach(y; 0 .. CHAR_SIZE_Y)
         {
-            LEM1802.SymbolBitmap b = display.getSymbolBitmap(i);
-
-            foreach(y; 0 .. CHAR_SIZE_Y)
+            foreach(x; 0 .. CHAR_SIZE_X)
             {
-                foreach(x; 0 .. CHAR_SIZE_X)
-                {
-                    bool isSet = display.getPixelOfSymbol(b, x, y);
+                bool isSet = display.getPixelOfSymbol(b, x, y);
 
-                    if(isSet)
-                        sym.drawPixel(x, y, 0x00ffffff);
-                }
+                if(isSet)
+                    ret.drawPixel(x, y, 0x00ffffff);
             }
         }
-    }
 
-    void remapVideo(InterruptAction ia)
-    {
-        if(ia == InterruptAction.MEM_MAP_FONT)
-            loadFontBitmap;
+        return ret;
     }
 
     override bool wantsKeyTracking() { return true; }

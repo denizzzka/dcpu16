@@ -42,20 +42,21 @@ class LEM1802 : IDevice
         switch(action)
         {
             case MEM_MAP_SCREEN:
-                screen = (B == 0) ? null : &mem[B];
-                return;
+                if(B != 0)
+                    screen = &mem[B];
+                break;
 
             case MEM_MAP_FONT:
                 font = (B == 0) ? defaultFont.ptr : &mem[B];
-                return;
+                break;
 
             case MEM_MAP_PALETTE:
                 palette = (B == 0) ? defaultPalette.ptr : &mem[B];
-                return;
+                break;
 
             case SET_BORDER_COLOR:
                 borderColor = B & 0xF;
-                return;
+                break;
 
             case MEM_DUMP_FONT:
                 dump(mem, font[0 .. defaultFont.length], B);
