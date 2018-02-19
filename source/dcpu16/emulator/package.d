@@ -3,6 +3,8 @@ module dcpu16.emulator;
 import std.string: format;
 import std.exception: enforce;
 
+version = CPUDebuggingMethods;
+
 alias Memory = ushort[];
 
 class Computer

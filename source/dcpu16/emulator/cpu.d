@@ -24,6 +24,7 @@ struct Registers
     private ushort _pc; /// program counter available for users through getter/setter
     ushort ex; /// extra/excess
     ushort ia; /// interrupt address
+    version(CPUDebuggingMethods) ds; /// debug status
 
     /// program counter register
     ushort PC() const pure @property { return _pc; }
@@ -79,6 +80,12 @@ pure struct CPU
 
             if(regs.ia)
                 regs.PC = regs.ia;
+        }
+
+        version(CPUDebuggingMethods)
+        {
+            if(testBreakpoint(regs.PC))
+                ds |= 1;
         }
 
         Instruction ins = getCurrInstruction;
@@ -352,6 +359,29 @@ pure struct CPU
 
         if(isBurning)
             throw new Dcpu16Exception("CPU is burning!", computer, __FILE__, __LINE__);
+    }
+
+    version(CPUDebuggingMethods)
+    {
+        private size_t[ushort] breakpoints;
+
+        void setBreakpoint(ushort addr, size_t skipBeforeTriggering)
+        {
+            breakpoints[addr] = skipBeforeTriggering;
+        }
+
+        private bool testBreakpoint(ushort pc)
+        {
+            if(pc in breakpoints)
+            {
+                if(breakpoints[pc] > 0)
+                    breakpoints[pc]--;
+                else
+                    return true;
+            }
+
+            return false;
+        }
     }
 
     string regsToString() const pure
