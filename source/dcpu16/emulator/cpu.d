@@ -1,5 +1,7 @@
 module dcpu16.emulator.cpu;
 
+version = CPUDebuggingMethods;
+
 struct Registers
 {
     union
@@ -85,7 +87,7 @@ pure struct CPU
         version(CPUDebuggingMethods)
         {
             if(testBreakpoint(regs.PC))
-                ds |= 1;
+                regs.ds |= 1;
         }
 
         Instruction ins = getCurrInstruction;
@@ -363,7 +365,7 @@ pure struct CPU
 
     version(CPUDebuggingMethods)
     {
-        private size_t[ushort] breakpoints;
+        size_t[ushort] breakpoints; // TODO: private
 
         void setBreakpoint(ushort addr, size_t skipBeforeTriggering)
         {
@@ -390,13 +392,21 @@ pure struct CPU
 
         with(regs)
         {
-            return format!
-                "A:%04x  B:%04x  C:%04x  X:%04x  Y:%04x  Z:%04x  I:%04x  J:%04x  SP:%04x  PC:%04x  EX:%04x  IA:%04x iPC:%04x\n [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]   [%04x]   [%04x]   [%04x]   [%04x]   [%04x]"
+            enum fmt = "A:%04x  B:%04x  C:%04x  X:%04x  Y:%04x  Z:%04x  I:%04x  J:%04x  SP:%04x  PC:%04x  EX:%04x  IA:%04x iPC:%04x\n [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]  [%04x]   [%04x]   [%04x]   [%04x]   [%04x]   [%04x]";
+
+            string res = format!fmt
                 (
                     A, B, c, x, y, z, i, j, sp, PC, ex, ia, pc,
                     mem[A], mem[B], mem[c], mem[x], mem[y], mem[z],
                     mem[i], mem[j], mem[sp], mem[PC], mem[ex], mem[ia], mem[pc]
                 );
+
+            version(CPUDebuggingMethods)
+            {
+                res ~= format("\nDebug status: %04x", ds);
+            }
+
+            return res;
         }
     }
 

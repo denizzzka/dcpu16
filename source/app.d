@@ -21,7 +21,12 @@ extern (C) int UIAppMain(string[] args)
         VerticalLayout
         {
             HorizontalLayout {
-                GroupBox { id: EMUL_SCREEN_GRP; text: "Screen" }
+                VerticalLayout {
+                    GroupBox { id: EMUL_SCREEN_GRP; text: "Screen" }
+                    GroupBox { text: "Breakpoints";
+                        EditBox { id: BREAKPOINTS; minHeight: 100 }
+                    }
+                }
                 VerticalLayout {
                     HorizontalLayout {
                         GroupBox {
@@ -171,6 +176,28 @@ extern (C) int UIAppMain(string[] args)
 
             return true;
         };
+
+    class NumericEditableContent : EditableContentChangeListener
+    {
+        void onEditableContentChanged(EditableContent c)
+        {
+            emulScr.comp.cpu.breakpoints.clear;
+
+            for(auto i = 0; i < c.length; i++)
+            {
+                import std.string;
+                import std.conv;
+
+                try
+                    emulScr.comp.cpu.setBreakpoint(c[i].chomp.to!ushort, 0);
+                catch(ConvException)
+                {}
+            }
+        }
+    }
+
+    widget!("BREAKPOINTS", EditBox).contentChange = new NumericEditableContent;
+
 
     window.mainWidget.childById("LOAD_FILE").addOnClickListener((Widget) {
             UIString caption;
