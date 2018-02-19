@@ -372,11 +372,11 @@ class EmulatorScreenWidget : ImageWidget
         cdbuf = new ColorDrawBuf(X_PIXELS + borderWidth*2, Y_PIXELS + borderWidth*2);
         cdbuf.fill(makeRGBA(display.getBorderColor));
 
-        //~ if(display.isSplashDisplayed)
-        //~ {
-            //~ placeSplashToBuf;
-            //~ return
-        //~ }
+        if(display.isSplashDisplayed)
+        {
+            placeSplashToBuf;
+            return;
+        }
 
         foreach(ubyte y; 0 .. Y_RESOLUTION)
             foreach(ubyte x; 0 .. X_RESOLUTION)
@@ -408,11 +408,12 @@ class EmulatorScreenWidget : ImageWidget
 
     private void placeSplashToBuf()
     {
-        foreach(ubyte y; 0 .. Y_PIXELS)
-            foreach(ubyte x; 0 .. X_PIXELS)
+        display.forEachSplashPixel(
+            (x, y, c)
             {
-                //~ bool forEachSplashPixel(x, y);
+                cdbuf.drawPixel(x + borderWidth, y + borderWidth, makeRGBA(c));
             }
+        );
     }
 
     override void onDraw(DrawBuf buf)

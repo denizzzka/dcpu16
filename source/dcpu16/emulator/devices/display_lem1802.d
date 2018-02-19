@@ -240,7 +240,7 @@ class LEM1802 : IDevice
         isBlinkingVisible = !isBlinkingVisible;
     }
 
-    private long splashTimeRemaining = 10_000_000; // hnsecs, 1 second
+    private long splashTimeRemaining = 19_000_000; // hnsecs, 1.9 seconds
 
     void splashClock(long interval)
     {
@@ -253,9 +253,16 @@ class LEM1802 : IDevice
         return splashTimeRemaining > 0;
     }
 
-    void forEachSplashPixel(void delegate(ubyte x, ubyte y, PaletteColor c)) const pure
+    void forEachSplashPixel(void delegate(ubyte x, ubyte y, PaletteColor c) dg) const
     {
         assert(isSplashDisplayed);
+
+        foreach(ubyte y; 0 .. Y_PIXELS)
+            foreach(ubyte x; 0 .. X_PIXELS)
+            {
+                PaletteColor c = PaletteColor(cast(ushort) 0x00aa6622);
+                dg(x, y, c);
+            }
     }
 }
 
