@@ -91,12 +91,19 @@ pure struct CPU
         return Instruction(mem[regs.PC]);
     }
 
-    private void executeInstruction(in Instruction ins)
+    /// Returns: clock cycles cost of executed instruction
+    private byte executeInstruction(in Instruction ins)
     {
+        byte cost;
+
         if(!ins.isSpecialOpcode)
-            performBasicInstruction(ins);
+            performBasicInstruction(ins, cost);
         else
-            performSpecialInstruction(ins);
+            performSpecialInstruction(ins, cost);
+
+        assert(cost > 0);
+
+        return cost;
     }
 
     private void complainWrongOpcode(in Instruction ins) pure
@@ -111,22 +118,26 @@ pure struct CPU
             );
     }
 
-    private void performBasicInstruction(in Instruction ins) pure
+    private void performBasicInstruction(in Instruction ins, out byte cost) pure
     {
-        if(ins.basic_opcode > Opcode.STD)
-            complainWrongOpcode(ins);
+        scope(success)
+        {
+            byte t = opcodesCyclesCost[ins.basic_opcode];
+            assert(t > 0);
+            cost += t;
+        }
 
         int r;
 
         ushort mutable = ins.a;
-        const ushort a = *decodeOperand(mutable, true);
+        const ushort a = *decodeOperand(mutable, true, cost);
         mutable = ins.b;
-        ushort* b_ptr = decodeOperand(mutable, false);
+        ushort* b_ptr = decodeOperand(mutable, false, cost);
         const b = *b_ptr;
 
         with(Opcode)
         with(regs)
-        final switch(ins.basic_opcode) // TODO: replace it with "wire connection matrix"?
+        switch(ins.basic_opcode)
         {
             case special: assert(false);
             case SET: r = a; break;
@@ -169,23 +180,20 @@ pure struct CPU
             case SHR: r = b >>> a; ex = ((b<<16)>>>a) & 0xffff; break;
             case ASR: r = cast(short)b >> a; ex = ((b<<16)>>>a) & 0xffff; break;
             case SHL: r = b << a; ex = ((b<<a)>>>16) & 0xffff; break;
-            case IFB: if(!((b & a) != 0)) skip; return;
-            case IFC: if(!((b & a) == 0)) skip; return;
-            case IFE: if(!(b == a)) skip; return;
-            case IFN: if(!(b != a)) skip; return;
-            case IFG: if(!(b > a)) skip; return;
-            case IFA: if(!(cast(short)b > cast(short)a)) skip; return;
-            case IFL: if(!(b < a)) skip; return;
-            case IFU: if(!(cast(short)b < cast(short)a)) skip; return;
+            case IFB: if(!((b & a) != 0)) skip(cost); return;
+            case IFC: if(!((b & a) == 0)) skip(cost); return;
+            case IFE: if(!(b == a)) skip(cost); return;
+            case IFN: if(!(b != a)) skip(cost); return;
+            case IFG: if(!(b > a)) skip(cost); return;
+            case IFA: if(!(cast(short)b > cast(short)a)) skip(cost); return;
+            case IFL: if(!(b < a)) skip(cost); return;
+            case IFU: if(!(cast(short)b < cast(short)a)) skip(cost); return;
             case ADX: r = b + a + ex; ex = (r >>> 16) ? 1 : 0; break;
             case SBX: r = b - a + ex; auto under = cast(ushort) r >> 16; ex = under ? 0xffff : 0; break;
             case STI: r = b; i++; j++; break;
             case STD: r = b; i--; j--; break;
 
-            case unused_0x18:
-            case unused_0x19:
-            case unused_0x1c:
-            case unused_0x1d:
+            default:
                 complainWrongOpcode(ins);
         }
 
@@ -194,8 +202,10 @@ pure struct CPU
     }
 
     /// Skip (set pc to) next instruction
-    private void skip() pure
+    private void skip(ref byte cost) pure
     {
+        cost++;
+
         /// Next instruction
         auto i = Instruction(mem[regs.pc]);
 
@@ -213,10 +223,17 @@ pure struct CPU
             (o & 0b11000) == 0b10000; // [some_register + next word]
     }
 
-    private void performSpecialInstruction(in Instruction ins)
+    private void performSpecialInstruction(in Instruction ins, byte cost)
     {
+        scope(success)
+        {
+            byte t = specialOpcodesCyclesCost[ins.spec_opcode];
+            assert(t > 0);
+            cost += t;
+        }
+
         ushort mutable_a = ins.a;
-        ushort* a_ptr = decodeOperand(mutable_a, true);
+        ushort* a_ptr = decodeOperand(mutable_a, true, cost);
         ushort a = *a_ptr;
 
         with(SpecialOpcode)
@@ -267,14 +284,14 @@ pure struct CPU
         return mem[regs.sp++];
     }
 
-    private ushort* decodeRegisterOfOperand(in ushort operand) pure
+    private ushort* decodeRegisterOfOperand(in ushort operand) pure nothrow
     {
         assert(operand <= 7);
 
         return &regs.asArr[operand];
     }
 
-    private ushort* decodeOperand(ref ushort operand, bool isA) pure
+    private ushort* decodeOperand(ref ushort operand, bool isA, ref byte cost) pure
     {
         if(operand > 0x3f)
             throw new Dcpu16Exception("Unknown operand", computer, __FILE__, __LINE__);
@@ -289,6 +306,7 @@ pure struct CPU
                 return &mem[ *decodeRegisterOfOperand(operand & 7) ];
 
             case 0x10: .. case 0x17: // [register + next word]
+                cost++;
                 return &mem[ *decodeRegisterOfOperand(operand & 7) + mem[regs.pc++] ];
 
             case 0x18: // PUSH / POP
@@ -298,6 +316,7 @@ pure struct CPU
                 return &mem[sp];
 
             case 0x1a: // PICK n
+                cost++;
                 return &mem[ sp + mem[pc+1] ];
 
             case 0x1b:
@@ -310,9 +329,11 @@ pure struct CPU
                 return &ex;
 
             case 0x1e: // [next word]
+                cost++;
                 return &mem[ mem[pc++] ];
 
             case 0x1f: // next word (literal)
+                cost++;
                 return &mem[pc++];
 
             default: // literal values
