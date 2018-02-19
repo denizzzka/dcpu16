@@ -156,7 +156,7 @@ extern (C) int UIAppMain(string[] args)
     auto sldr = cast(SliderWidget) window.mainWidget.childById("CPU_SPEED");
     sldr.minValue = 1;
     sldr.maxValue = 200_001;
-    sldr.position = 100;
+    sldr.position = emulScr.freqHz;
 
     void displayCPUSpeed()
     {
@@ -230,8 +230,6 @@ extern (C) int UIAppMain(string[] args)
 
     refreshMemDump;
 
-    emulScr.startClocking(sldr.position);
-
     // show window
     window.show();
 
@@ -251,8 +249,6 @@ class EmulatorScreenWidget : ImageWidget
     void delegate() onPauseStateChanged;
 
     private bool _paused = true;
-    private ulong clockTimer;
-    private ulong blinkingTimer;
     private void delegate() onScreenDraw;
     private void delegate(Dcpu16Exception) onExceptionDg;
 
@@ -278,65 +274,36 @@ class EmulatorScreenWidget : ImageWidget
         if(onPauseStateChanged) onPauseStateChanged();
     }
 
-    private uint numOfStepsPerTick;
+    private uint freqHz = 100_000;
 
     void setCPUFreq(uint Hz)
     {
         assert(Hz > 0);
 
-        enum minTimerInterval = 50;
-        uint timerInterval;
-
-        if(1000 / Hz > minTimerInterval)
-        {
-            timerInterval = 1000 / Hz;
-            numOfStepsPerTick = 1;
-        }
-        else
-        {
-            timerInterval = minTimerInterval;
-            numOfStepsPerTick = Hz / timerInterval;
-        }
-
-        static bool timerCreated = false;
-
-        if(!timerCreated)
-            timerCreated = true;
-        else
-            cancelTimer(clockTimer);
-
-        clockTimer = setTimer(timerInterval);
-    }
-
-    void startClocking(uint initialClockingFreq_Hz)
-    {
-        setCPUFreq(initialClockingFreq_Hz);
-        blinkingTimer = setTimer(800);
+        freqHz = Hz;
     }
 
     void tick()
     {
         try
         {
-            foreach(_; 0 .. numOfStepsPerTick)
+            clockCounter++;
+
+            static ubyte cyclesRemaining;
+
+            if(cyclesRemaining == 0)
             {
-                static ubyte cyclesRemaining;
+                cyclesRemaining = step();
 
-                if(cyclesRemaining == 0)
+                if(comp.cpu.regs.ds != 0) // breakpoint check
                 {
-                    cyclesRemaining = step();
-
-                    if(comp.cpu.regs.ds != 0) // breakpoint check
-                    {
-                        paused = true;
-                        comp.machineState.writeln;
-                        comp.cpu.regs.ds = 0;
-                    }
+                    paused = true;
+                    comp.machineState.writeln;
+                    comp.cpu.regs.ds = 0;
                 }
-
-                cyclesRemaining--;
-                clockCounter++;
             }
+
+            cyclesRemaining--;
         }
         catch(Dcpu16Exception e)
         {
@@ -354,19 +321,34 @@ class EmulatorScreenWidget : ImageWidget
         return comp.cpu.step();
     }
 
-    override bool onTimer(ulong id)
+    override bool animating() { return true; }
+
+    /// animates window; interval is time left from previous draw, in hnsecs (1/10000000 of second)
+    override void animate(long interval)
     {
-        if(id == clockTimer)
+        enum blinkPeriod = 8_000_000; // 0.8 sec
+
+        static ulong blinkingTime;
+        blinkingTime += interval;
+
+        if(blinkingTime > blinkPeriod)
         {
-            if(!paused)
-                tick();
-        }
-        else if(id == blinkingTimer)
-        {
+            blinkingTime %= blinkPeriod;
             display.switchBlink();
         }
 
-        return true;
+        if(!paused)
+        {
+            static ulong clockInterval;
+            clockInterval += interval;
+
+            auto period = 10_000_000 / freqHz;
+            auto ticks = clockInterval / period;
+            clockInterval %= period;
+
+            foreach(_; 0 .. ticks)
+                tick();
+        }
     }
 
     private static uint makeRGBA(PaletteColor c) pure @property
