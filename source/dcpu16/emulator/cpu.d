@@ -456,13 +456,25 @@ private immutable byte[] opcodesCyclesCost =
     3, 3, 3, 3, // division
     1, 1, 1, 1, 1, 1, // bit manipulation
     2, 2, 2, 2, 2, 2, 2, 2, // conditional branching
-    -1, -1, // unused opcodes
+    -1, -1, // unused
     3, 3, // ADX and SBX
-    -1, -1, // unused opcodes
+    -1, -1, // unused
     2,  2, // STI and STD
 ];
 
 static assert(opcodesCyclesCost.length == Opcode.STD + 1);
+
+private immutable byte[] specialOpcodesCyclesCost =
+[
+    -1, // reserved opcode
+    3, // JSR
+    -1, -1, -1, -1, -1, -1, // unused
+    4, 1, 1, 3, 2, // interrupts
+    -1, -1, -1, // unused
+    2, 4, 4, // hardware
+];
+
+static assert(specialOpcodesCyclesCost.length == SpecialOpcode.HWI + 1);
 
 struct Instruction
 {
