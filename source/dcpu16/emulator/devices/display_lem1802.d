@@ -14,9 +14,9 @@ static assert(PIXELS_NUM == 128 * 96);
 
 class LEM1802 : IDevice
 {
-    uint id() const pure { return 0x7349f615; };
-    uint manufacturer() const pure { return 0x1c6c8b36; };
-    ushort ver() const pure { return 0x1802; };
+    override uint id() const pure { return 0x7349f615; };
+    override uint manufacturer() const pure { return 0x1c6c8b36; };
+    override ushort ver() const pure { return 0x1802; };
 
     private const(ushort)* screen;
     private const(ushort)* font;
@@ -35,7 +35,7 @@ class LEM1802 : IDevice
         reset();
     }
 
-    void reset()
+    override void reset()
     {
         font = defaultFont.ptr;
         palette = defaultPalette.ptr;
@@ -43,7 +43,7 @@ class LEM1802 : IDevice
         splashTimeRemaining = 25_000_000; // 2.5 seconds
     }
 
-    void handleHardwareInterrupt(Computer comp)
+    override void handleHardwareInterrupt(Computer comp)
     {
         auto action = cast(InterruptAction) comp.cpu.regs.A;
 

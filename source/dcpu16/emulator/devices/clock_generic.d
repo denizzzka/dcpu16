@@ -5,9 +5,9 @@ import dcpu16.emulator;
 
 class Clock : IDevice
 {
-    uint id() const pure { return 0x12d0b402; };
-    uint manufacturer() const pure { return 0x1c6c8b36; };
-    ushort ver() const pure { return 2; };
+    override uint id() const pure { return 0x12d0b402; };
+    override uint manufacturer() const pure { return 0x1c6c8b36; };
+    override ushort ver() const pure { return 2; };
 
     private Computer comp;
     private ushort ticks;
@@ -20,7 +20,7 @@ class Clock : IDevice
         comp = c;
     }
 
-    void reset()
+    override void reset()
     {
         ticks = 0;
         timer = 0;
@@ -28,8 +28,10 @@ class Clock : IDevice
         interruptMsg = 0;
     }
 
-    void handleHardwareInterrupt(Computer comp)
+    override void handleHardwareInterrupt(Computer _comp)
     {
+        assert(comp == _comp);
+
         with(InterruptActions)
         with(comp)
         with(cpu.regs)

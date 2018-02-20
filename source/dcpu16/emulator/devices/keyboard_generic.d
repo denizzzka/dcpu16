@@ -5,9 +5,9 @@ import dcpu16.emulator;
 
 class Keyboard : IDevice
 {
-    uint id() const pure { return 0x30cf7406; };
-    uint manufacturer() const pure { return 0; };
-    ushort ver() const pure { return 1; };
+    override uint id() const pure { return 0x30cf7406; };
+    override uint manufacturer() const pure { return 0; };
+    override ushort ver() const pure { return 1; };
 
     private Computer comp;
     private ubyte[] buf;
@@ -26,12 +26,12 @@ class Keyboard : IDevice
         maxBufLength = keyBufferLength;
     }
 
-    void reset()
+    override void reset()
     {
         buf = null;
     }
 
-    void handleHardwareInterrupt(in Computer _unused)
+    override void handleHardwareInterrupt(in Computer _unused)
     {
         assert(comp == _unused);
 

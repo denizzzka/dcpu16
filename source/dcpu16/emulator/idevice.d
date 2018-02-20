@@ -2,7 +2,7 @@ module dcpu16.emulator.idevice;
 
 import dcpu16.emulator: Computer;
 
-interface IDevice
+abstract class /*interface*/ IDevice
 {
     uint id() const pure;
     ushort ver() const pure;
