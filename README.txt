@@ -5,9 +5,7 @@ DCPU-16 emulator
 
 TODO:
 
-* Interrupts
 * Keyboard
 * Other standard hardware support
-* Splash screens at startup
 * Sound chip support
 * Add new hardware: mouse
