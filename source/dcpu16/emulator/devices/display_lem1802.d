@@ -188,10 +188,9 @@ class LEM1802 : IDevice
 
                 bool visible = isBlinkingVisible | !s.blinking;
 
-                if(visible && getPixel(x, y))
-                    c = getColor(s.foreground);
-                else
-                    c = getColor(s.background);
+                c = (visible && getPixel(x, y))
+                    ? getColor(s.foreground)
+                    : getColor(s.background);
 
                 dg(x, y, c);
             }
@@ -226,7 +225,10 @@ class LEM1802 : IDevice
 
     PaletteColor getBorderColor() const
     {
-        return getColor(borderColor);
+        if(isSplashDisplayed)
+            return getColor(0x7);
+        else
+            return getColor(borderColor);
     }
 
     /**
@@ -260,9 +262,55 @@ class LEM1802 : IDevice
         foreach(ubyte y; 0 .. Y_PIXELS)
             foreach(ubyte x; 0 .. X_PIXELS)
             {
-                PaletteColor c = PaletteColor(cast(ushort) 0x00aa6622);
+                enum fakeBorderWidth = 8;
+                enum fakeBorderHeight = 7;
+                PaletteColor c;
+
+                if(
+                    (x >= fakeBorderWidth && x <= X_PIXELS - fakeBorderWidth) &&
+                    (y >= fakeBorderHeight && y <= Y_PIXELS - fakeBorderHeight)
+                )
+                {
+                    if(splashTimeRemaining > 10_000_000)
+                        c = getColor(0x0);
+                    else
+                        c = getCopyrightPixels(x , y);
+                }
+                else // draw fake border
+                {
+                    c = getColor(0x7);
+                }
+
                 dg(x, y, c);
             }
+    }
+
+    private PaletteColor getCopyrightPixels(byte x, byte y) const
+    {
+        enum w = 93;
+        enum h = 3;
+        enum letterWidth = 3;
+
+        // start coords
+        enum x0 = CHAR_SIZE_X * 2;
+        enum y0 = letterWidth * 29;
+
+        x -= x0;
+        y -= y0;
+
+        bool pixel;
+
+        if(
+            (x >= 0 && x < w) &&
+            (y >= 0 && y < h)
+        )
+        {
+            pixel = nyaResearchLtd[x + y * w] != 0;
+        }
+
+        return pixel
+            ? getColor(0x0)
+            : getColor(0x7); // default ZX background color
     }
 }
 
