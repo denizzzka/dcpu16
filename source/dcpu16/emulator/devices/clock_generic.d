@@ -57,14 +57,14 @@ class Clock : IDevice
 
     void clock60Hz()
     {
-        if(timerInterval)
+        if(timerInterval != 0)
         {
             timer++;
 
-            if(timer / timerInterval)
+            if(timer >= timerInterval)
             {
-                ticks++;
                 timer = 0;
+                ticks++;
 
                 if(interruptMsg)
                     comp.cpu.addInterruptOrBurnOut(interruptMsg);

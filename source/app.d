@@ -355,40 +355,46 @@ class EmulatorScreenWidget : ImageWidget
     /// animates window; interval is time left from previous draw, in hnsecs (1/10000000 of second)
     override void animate(long interval)
     {
-        enum blinkPeriod = 8_000_000UL; // 0.8 sec
-
-        static ulong blinkingTime;
-        blinkingTime += interval;
-
-        if(blinkingTime > blinkPeriod)
         {
-            blinkingTime %= blinkPeriod;
-            display.switchBlink();
+            enum blinkPeriod = 8_000_000UL; // 0.8 sec
+
+            static ulong blinkingTime;
+            blinkingTime += interval;
+
+            if(blinkingTime >= blinkPeriod)
+            {
+                blinkingTime %= blinkPeriod;
+                display.switchBlink();
+            }
         }
 
-        static ulong clockInterval;
-        clockInterval += interval;
+        {
+            static ulong clockInterval;
+            clockInterval += interval;
 
-        auto period = 10_000_000UL / freqHz;
-        auto ticks = clockInterval / period;
-        clockInterval %= period;
+            auto period = 10_000_000UL / freqHz;
+            auto ticks = clockInterval / period;
+            clockInterval %= period;
 
-        foreach(_; 0 .. ticks)
-            if(!paused)
-                tick();
+            foreach(_; 0 .. ticks)
+                if(!paused)
+                    tick();
 
-        display.splashClock(interval);
+            display.splashClock(interval);
+        }
 
         {
-            static ulong timer60HectoHz;
-            timer60HectoHz += interval;
+            static ulong interval60Hz;
+            interval60Hz += interval;
 
-            enum hscs = 1_000_000 / 60;
-            auto cnt = timer60HectoHz / hscs;
-            timer60HectoHz %= hscs;
+            auto period = 10_000_000UL / 60;
 
-            foreach(_; 0 .. cnt)
+            if(interval60Hz >= period)
+            {
+                interval60Hz %= period;
+
                 clock.clock60Hz;
+            }
         }
     }
 
