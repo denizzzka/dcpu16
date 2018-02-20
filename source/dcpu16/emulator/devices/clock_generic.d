@@ -61,7 +61,7 @@ class Clock : IDevice
         {
             timer++;
 
-            if(timer >= 60 / timerInterval)
+            if(timer >= timerInterval)
             {
                 timer = 0;
                 ticks++;
@@ -112,5 +112,5 @@ unittest
         }
     }
 
-    assert(cnt == 600); // 60 cycles * 10 seconds
+    assert(cnt == 10);
 }
