@@ -5,12 +5,12 @@ import dcpu16.emulator;
 
 class Clock : IDevice
 {
-    uint id() const pure { return 0x12d1b402; };
+    uint id() const pure { return 0x12d0b402; };
     uint manufacturer() const pure { return 0x1c6c8b36; };
     ushort ver() const pure { return 2; };
 
     private Computer comp;
-    private ushort clock;
+    private ushort ticks;
     private ushort timer;
     private ushort timerInterval; // Means 60/n ticks per second
     private ushort interruptMsg;
@@ -22,7 +22,7 @@ class Clock : IDevice
 
     void reset()
     {
-        clock = 0;
+        ticks = 0;
         timer = 0;
         timerInterval = 0;
         interruptMsg = 0;
@@ -40,8 +40,8 @@ class Clock : IDevice
                 break;
 
             case GET_TICKS:
-                c = timerInterval ? clock / timerInterval : 0;
-                clock %= timerInterval;
+                c = ticks;
+                ticks = 0;
                 break;
 
             case SET_INT:
@@ -55,12 +55,10 @@ class Clock : IDevice
 
     void clock60Hz()
     {
-        clock++;
-        timer++;
-
         if(interruptMsg && timerInterval)
             if(timer / timerInterval)
             {
+                ticks++;
                 timer = 0;
 
                 comp.cpu.addInterruptOrBurnOut(interruptMsg);
