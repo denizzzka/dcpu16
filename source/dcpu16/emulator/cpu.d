@@ -262,7 +262,7 @@ pure struct CPU
                 pc = pop();
                 return;
             case IAQ: intQueue.isTriggeringEnabled = (a == 0); return;
-            case HWN: a = cast(ushort) computer.devices.length; return;
+            case HWN: a = cast(ushort) computer.devices.length; break;
             case HWQ:
                 if(a >= computer.devices.length) complainWrongDeviceNum(ins, a);
                 auto dev = computer.devices[a];
