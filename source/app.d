@@ -130,13 +130,10 @@ extern (C) int UIAppMain(string[] args)
     {
         import std.stdio;
         e.msg.writeln;
-
-        if(!emulScr.paused)
-            emulScr.paused = true;
     };
 
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
-            emulScr.clockCounter += emulScr.step();
+            emulScr.clockCounter += emulScr.step(); // FIXME: check for exceptions is need here
             refreshClock;
             refreshMemDump;
             comp.machineState.writeln;
@@ -299,12 +296,10 @@ class EmulatorScreenWidget : ImageWidget
 
     void tick()
     {
+        static ubyte cyclesRemaining;
+
         try
         {
-            clockCounter++;
-
-            static ubyte cyclesRemaining;
-
             if(cyclesRemaining == 0)
             {
                 cyclesRemaining = step();
@@ -318,9 +313,13 @@ class EmulatorScreenWidget : ImageWidget
             }
 
             cyclesRemaining--;
+            clockCounter++;
         }
         catch(Dcpu16Exception e)
         {
+            cyclesRemaining = 0;
+            paused = true;
+
             if(onExceptionDg)
                 onExceptionDg(e);
         }
@@ -330,7 +329,7 @@ class EmulatorScreenWidget : ImageWidget
     {
         import dcpu16.emulator.exception;
 
-        stepCounter++;
+        scope(success) stepCounter++;
 
         return comp.cpu.step();
     }
@@ -351,18 +350,16 @@ class EmulatorScreenWidget : ImageWidget
             display.switchBlink();
         }
 
-        if(!paused)
-        {
-            static ulong clockInterval;
-            clockInterval += interval;
+        static ulong clockInterval;
+        clockInterval += interval;
 
-            auto period = 10_000_000 / freqHz;
-            auto ticks = clockInterval / period;
-            clockInterval %= period;
+        auto period = 10_000_000 / freqHz;
+        auto ticks = clockInterval / period;
+        clockInterval %= period;
 
-            foreach(_; 0 .. ticks)
+        foreach(_; 0 .. ticks)
+            if(!paused)
                 tick();
-        }
 
         display.splashClock(interval);
     }
