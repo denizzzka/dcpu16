@@ -354,7 +354,9 @@ unittest
 {
     auto c = new Computer;
     auto d = new LEM1802(c);
+    d.splashTimeRemaining = 0;
     c.attachDevice = d;
+
 
     c.mem[0x8000] = 0b0111_1110_0_0000000 + '1'; // colored nonblinking '1'
     c.mem[0x8001] = '2';
