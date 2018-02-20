@@ -248,8 +248,6 @@ class LEM1802 : IDevice
     {
         if(splashTimeRemaining > 0)
             splashTimeRemaining -= interval;
-        else
-            splashTimeRemaining = 20_000_000;
     }
 
     bool isSplashDisplayed() const pure
@@ -280,15 +278,18 @@ class LEM1802 : IDevice
 
                         if
                         (
-                            //~ splashTimeRemaining < 15_000_000 &&
-                            (x % 3 == 0) // red line at every column
+                            splashTimeRemaining < 15_800_000 &&
+                            (x % 4 == 0) // red line at every column
                         )
                         {
                             if
                             (
-                                (relY % 4 == 0) || // upper dotted lines
-                                (relY % 2 == 0 && relY >= yPixels1_3) || // dotted lines at middle of the screen
-                                (relY >= yPixels1_3*2) // solid lines at bottom
+                                // upper dotted lines
+                                (relY % 4 == 0 && splashTimeRemaining > 15_000_000) ||
+                                // dotted lines at middle of the screen
+                                (relY % 4 == 0 && relY >= yPixels1_3 && splashTimeRemaining > 14_700_000) ||
+                                // solid lines at bottom
+                                (relY % 2 == 0 && relY >= yPixels1_3*2 && splashTimeRemaining > 14_300_000)
                             )
                             {
                                 c = getColor(0x4); // red lines
