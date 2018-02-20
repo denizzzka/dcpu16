@@ -242,12 +242,14 @@ class LEM1802 : IDevice
         isBlinkingVisible = !isBlinkingVisible;
     }
 
-    private long splashTimeRemaining = 19_000_000; // hnsecs, 1.9 seconds
+    private long splashTimeRemaining = 20_000_000; // hnsecs, 2 seconds
 
     void splashClock(long interval)
     {
         if(splashTimeRemaining > 0)
             splashTimeRemaining -= interval;
+        else
+            splashTimeRemaining = 20_000_000;
     }
 
     bool isSplashDisplayed() const pure
@@ -272,9 +274,33 @@ class LEM1802 : IDevice
                 )
                 {
                     if(splashTimeRemaining > 10_000_000)
-                        c = getColor(0x0);
+                    {
+                        enum yPixels1_3 = (Y_PIXELS - fakeBorderHeight*2)/3; // 1/3 of pixels on this "zx" screen
+                        auto relY = y - fakeBorderHeight;
+
+                        if
+                        (
+                            //~ splashTimeRemaining < 15_000_000 &&
+                            (x % 3 == 0) // red line at every column
+                        )
+                        {
+                            if
+                            (
+                                (relY % 4 == 0) || // upper dotted lines
+                                (relY % 2 == 0 && relY >= yPixels1_3) || // dotted lines at middle of the screen
+                                (relY >= yPixels1_3*2) // solid lines at bottom
+                            )
+                            {
+                                c = getColor(0x4); // red lines
+                            }
+                            else
+                            {
+                                c = getColor(0x0);
+                            }
+                        }
+                    }
                     else
-                        c = getCopyrightPixels(x , y);
+                        c = getCopyrightPixels(x, y);
                 }
                 else // draw fake border
                 {
