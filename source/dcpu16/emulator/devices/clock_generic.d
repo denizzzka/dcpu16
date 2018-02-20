@@ -51,7 +51,7 @@ class Clock : IDevice
                 break;
 
             default:
-                assert(false);
+                break;
         }
     }
 
