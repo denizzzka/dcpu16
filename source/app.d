@@ -115,7 +115,7 @@ extern (C) int UIAppMain(string[] args)
     void refreshClock()
     {
         widget!"STEP_NUM_INDICATOR".text = emulScr.stepCounter.to!dstring;
-        widget!"CLOCK_NUM_INDICATOR".text = emulScr.clockCounter.to!dstring;
+        widget!"CLOCK_NUM_INDICATOR".text = emulScr.clockCounter.clockCounter.to!dstring;
     }
 
     refreshClock;
@@ -240,10 +240,10 @@ extern (C) int UIAppMain(string[] args)
     return Platform.instance.enterMessageLoop();
 }
 
+import dcpu16.emulator.devices.clock: Clock;
+
 class EmulatorScreenWidget : ImageWidget
 {
-    import dcpu16.emulator.devices.clock: Clock;
-
     enum borderWidth = 4;
     private ColorDrawBuf cdbuf;
     private Computer comp;
@@ -251,7 +251,7 @@ class EmulatorScreenWidget : ImageWidget
     Keyboard keyboard;
     Clock clock;
     long stepCounter;
-    long clockCounter;
+    ClockCounter clockCounter;
     private ubyte bogusCyclesRemaining;
     void delegate() onPauseStateChanged;
 
@@ -272,13 +272,14 @@ class EmulatorScreenWidget : ImageWidget
         comp = c;
         display = d;
         clock = new Clock(comp);
+        clockCounter = ClockCounter(clock);
         comp.devices ~= clock;
     }
 
     void reset()
     {
         comp.reset();
-        clockCounter = 0;
+        clockCounter.reset;
         stepCounter = 0;
         bogusCyclesRemaining = 0;
         paused = true;
@@ -332,8 +333,6 @@ class EmulatorScreenWidget : ImageWidget
 
     private ubyte step()
     {
-        import dcpu16.emulator.exception;
-
         scope(success) stepCounter++;
 
         return comp.cpu.step();
@@ -343,7 +342,7 @@ class EmulatorScreenWidget : ImageWidget
     {
         try
         {
-            clockCounter += step();
+            clockCounter.increment = step();
         }
         catch(Dcpu16Exception e)
             if(onExceptionDg)
@@ -381,20 +380,6 @@ class EmulatorScreenWidget : ImageWidget
                     tick();
 
             display.splashClock(interval);
-        }
-
-        {
-            static ulong interval60Hz;
-            interval60Hz += interval;
-
-            auto period = 10_000_000UL / 60;
-
-            if(interval60Hz >= period)
-            {
-                interval60Hz %= period;
-
-                clock.clock60Hz;
-            }
         }
     }
 
@@ -533,5 +518,49 @@ class EmulatorScreenWidget : ImageWidget
         }
 
         return true;
+    }
+}
+
+private struct ClockCounter
+{
+    Clock clock;
+    private ulong cnt;
+    private long cnt60Hz;
+
+    ulong clockCounter() const { return cnt; }
+    alias clockCounter this;
+
+    this(Clock c)
+    {
+        clock = c;
+    }
+
+    void reset() { cnt = 0; }
+
+    void increment(ubyte incr)
+    {
+        cnt += incr;
+        cnt60Hz += incr;
+
+        test60Hz;
+    }
+
+    void opUnary(string op)()
+    if (op == "++")
+    {
+        increment(1);
+    }
+
+    // 60 Hz clocking based on CPU clocking generator
+    private void test60Hz()
+    {
+        // 100 kHz / 60 Hz
+        enum period = 100_000 / 60;
+
+        if(cnt60Hz > period)
+        {
+            cnt60Hz %= period;
+            clock.clock60Hz;
+        }
     }
 }
