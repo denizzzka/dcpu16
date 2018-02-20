@@ -76,10 +76,11 @@ class Computer
     {
         import dcpu16.asm_.decode: explainInstruction;
 
-        return format("Asm: %s\nInstruction: %s\n%s",
+        return format("Asm: %s\nInstruction: %s\n%s\n%s",
                 explainInstruction(mem, cpu.regs.PC, cpu.getCurrInstruction),
                 cpu.getCurrInstruction.toString,
                 cpu.regsToString,
+                cpu.intQueueDump,
             );
     }
 }

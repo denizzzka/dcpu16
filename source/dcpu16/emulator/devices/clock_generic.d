@@ -83,3 +83,34 @@ enum InterruptActions : ushort
     SET_REAL_TIME,
     RESET = 0xffff
 }
+
+unittest
+{
+    enum str = import("tester_clock.bin");
+    auto blob = cast(ubyte[]) str;
+
+    auto comp = new Computer();
+    auto clock = new Clock(comp);
+    comp.devices ~= clock;
+
+    comp.load(blob, true);
+
+    size_t cnt;
+    ushort prev;
+
+    foreach(i; 0 .. 1_000_000) // 10 seconds on 1 kHz
+    {
+        comp.cpu.step();
+
+        if(i % (100_000 / 60) == 0)
+            clock.clock60Hz();
+
+        if(comp.cpu.regs.j != prev)
+        {
+            prev = comp.cpu.regs.j;
+            cnt++;
+        }
+    }
+
+    assert(cnt == 600); // 60 cycles * 10 seconds
+}

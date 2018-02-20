@@ -428,6 +428,11 @@ pure struct CPU
 
         return ret;
     }
+
+    string intQueueDump() const pure
+    {
+        return intQueue.toString;
+    }
 }
 
 private struct InteruptQueue
@@ -461,6 +466,16 @@ private struct InteruptQueue
     void reset() pure
     {
         this = InteruptQueue();
+    }
+
+    string toString() const pure
+    {
+        string ret = format("INT queue length %d, messages: ", queue.length);
+
+        foreach(ref msg; queue)
+            ret ~= format("%d ", msg);
+
+        return ret;
     }
 }
 
