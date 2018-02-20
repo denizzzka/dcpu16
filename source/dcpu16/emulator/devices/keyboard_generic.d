@@ -26,6 +26,11 @@ class Keyboard : IDevice
         maxBufLength = keyBufferLength;
     }
 
+    void reset()
+    {
+        buf = null;
+    }
+
     void handleHardwareInterrupt(in Computer _unused)
     {
         assert(comp == _unused);
@@ -36,9 +41,7 @@ class Keyboard : IDevice
         switch(A)
         {
             case CLEAR_BUFFER:
-                foreach(ref k; buf)
-                    k = 0;
-
+                buf = null;
                 return;
 
             case GET_NEXT:

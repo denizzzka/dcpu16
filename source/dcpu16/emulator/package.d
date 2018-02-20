@@ -29,11 +29,12 @@ class Computer
         enforce(devices.length <= short.max);
     }
 
-    void reset() pure
+    void reset()
     {
-        mem.length = 0;
-        mem.length = 0x10000;
         cpu.reset();
+
+        foreach(ref m; mem) m = 0;
+        foreach(ref d; devices) d.reset();
     }
 
     void load(in ubyte[] from, bool wrongEndianness)

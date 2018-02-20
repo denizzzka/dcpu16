@@ -8,4 +8,5 @@ interface IDevice
     ushort ver() const pure;
     uint manufacturer() const pure;
     void handleHardwareInterrupt(Computer);
+    void reset();
 }

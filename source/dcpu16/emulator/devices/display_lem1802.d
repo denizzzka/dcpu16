@@ -19,17 +19,28 @@ class LEM1802 : IDevice
     ushort ver() const pure { return 0x1802; };
 
     private const(ushort)* screen;
-    private const(ushort)* font = defaultFont.ptr;
-    private const(ushort)* palette = defaultPalette.ptr;
+    private const(ushort)* font;
+    private const(ushort)* palette;
     private ubyte borderColor;
     bool isBlinkingVisible = true;
     void delegate(InterruptAction) onInterruptAction;
+    private long splashTimeRemaining; /// in hnsecs (hectoseconds)
 
     bool isDisconnected() const { return screen is null; }
 
     this(Computer comp)
     {
         screen = &comp.mem[0x8000]; // de facto standard
+
+        reset();
+    }
+
+    void reset()
+    {
+        font = defaultFont.ptr;
+        palette = defaultPalette.ptr;
+        borderColor = 0;
+        splashTimeRemaining = 20_000_000; // 2 seconds
     }
 
     void handleHardwareInterrupt(Computer comp)
@@ -241,8 +252,6 @@ class LEM1802 : IDevice
     {
         isBlinkingVisible = !isBlinkingVisible;
     }
-
-    private long splashTimeRemaining = 20_000_000; // hnsecs, 2 seconds
 
     void splashClock(long interval)
     {

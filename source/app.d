@@ -55,6 +55,7 @@ extern (C) int UIAppMain(string[] args)
                 Button { id: STEP; text: "Step" }
                 Button { id: PAUSE; text: "Run" }
                 Button { id: RESET_CPU; text: "Reset CPU" }
+                Button { id: RESET_COMP; text: "Reset computer" }
                 Button { id: LOAD_FILE; text: "Load dump..." }
             }
         }
@@ -150,6 +151,11 @@ extern (C) int UIAppMain(string[] args)
     window.mainWidget.childById("RESET_CPU").addOnClickListener((Widget) {
             emulScr.comp.cpu.reset;
             comp.machineState.writeln;
+            return true;
+        });
+
+    window.mainWidget.childById("RESET_COMP").addOnClickListener((Widget) {
+            emulScr.reset;
             return true;
         });
 
@@ -264,6 +270,14 @@ class EmulatorScreenWidget : ImageWidget
 
         comp = c;
         display = d;
+    }
+
+    void reset()
+    {
+        clockCounter = 0;
+        stepCounter = 0;
+        comp.reset();
+        paused = true;
     }
 
     bool paused() const { return _paused; }
