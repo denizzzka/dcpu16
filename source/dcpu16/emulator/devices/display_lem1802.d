@@ -40,7 +40,7 @@ class LEM1802 : IDevice
         font = defaultFont.ptr;
         palette = defaultPalette.ptr;
         borderColor = 0;
-        splashTimeRemaining = 20_000_000; // 2 seconds
+        splashTimeRemaining = 25_000_000; // 2.5 seconds
     }
 
     void handleHardwareInterrupt(Computer comp)
@@ -280,25 +280,25 @@ class LEM1802 : IDevice
                     (y >= fakeBorderHeight && y <= Y_PIXELS - fakeBorderHeight)
                 )
                 {
-                    if(splashTimeRemaining > 10_000_000)
+                    if(splashTimeRemaining > 15_000_000)
                     {
                         enum yPixels1_3 = (Y_PIXELS - fakeBorderHeight*2)/3; // 1/3 of pixels on this "zx" screen
                         auto relY = y - fakeBorderHeight;
 
                         if
                         (
-                            splashTimeRemaining < 15_800_000 &&
+                            splashTimeRemaining < 20_800_000 &&
                             (x % 4 == 0) // red line at every column
                         )
                         {
                             if
                             (
                                 // upper dotted lines
-                                (relY % 4 == 0 && splashTimeRemaining > 15_000_000) ||
+                                (relY % 4 == 0 && splashTimeRemaining > 20_000_000) ||
                                 // dotted lines at middle of the screen
-                                (relY % 4 == 0 && relY >= yPixels1_3 && splashTimeRemaining > 14_700_000) ||
+                                (relY % 4 == 0 && relY >= yPixels1_3 && splashTimeRemaining > 19_700_000) ||
                                 // solid lines at bottom
-                                (relY % 2 == 0 && relY >= yPixels1_3*2 && splashTimeRemaining > 14_300_000)
+                                (relY % 2 == 0 && relY >= yPixels1_3*2 && splashTimeRemaining > 19_300_000)
                             )
                             {
                                 c = getColor(0x4); // red lines
