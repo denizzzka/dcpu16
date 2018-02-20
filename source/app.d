@@ -242,11 +242,14 @@ extern (C) int UIAppMain(string[] args)
 
 class EmulatorScreenWidget : ImageWidget
 {
+    import dcpu16.emulator.devices.clock: Clock;
+
     enum borderWidth = 4;
     private ColorDrawBuf cdbuf;
     private Computer comp;
     private LEM1802 display;
     Keyboard keyboard;
+    Clock clock;
     long stepCounter;
     long clockCounter;
     private ubyte bogusCyclesRemaining;
@@ -268,6 +271,8 @@ class EmulatorScreenWidget : ImageWidget
 
         comp = c;
         display = d;
+        clock = new Clock(comp);
+        comp.devices ~= clock;
     }
 
     void reset()
@@ -350,7 +355,7 @@ class EmulatorScreenWidget : ImageWidget
     /// animates window; interval is time left from previous draw, in hnsecs (1/10000000 of second)
     override void animate(long interval)
     {
-        enum blinkPeriod = 8_000_000; // 0.8 sec
+        enum blinkPeriod = 8_000_000UL; // 0.8 sec
 
         static ulong blinkingTime;
         blinkingTime += interval;
@@ -364,7 +369,7 @@ class EmulatorScreenWidget : ImageWidget
         static ulong clockInterval;
         clockInterval += interval;
 
-        auto period = 10_000_000 / freqHz;
+        auto period = 10_000_000UL / freqHz;
         auto ticks = clockInterval / period;
         clockInterval %= period;
 
@@ -373,6 +378,18 @@ class EmulatorScreenWidget : ImageWidget
                 tick();
 
         display.splashClock(interval);
+
+        {
+            static ulong timer60HectoHz;
+            timer60HectoHz += interval;
+
+            enum hscs = 1_000_000 / 60;
+            auto cnt = timer60HectoHz / hscs;
+            timer60HectoHz %= hscs;
+
+            foreach(_; 0 .. cnt)
+                clock.clock60Hz;
+        }
     }
 
     private static uint makeRGBA(PaletteColor c) pure @property
