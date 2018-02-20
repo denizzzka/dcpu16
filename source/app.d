@@ -133,7 +133,7 @@ extern (C) int UIAppMain(string[] args)
     };
 
     window.mainWidget.childById("STEP").addOnClickListener((Widget) {
-            emulScr.clockCounter += emulScr.step(); // FIXME: check for exceptions is need here
+            emulScr.oneStep();
             refreshClock;
             refreshMemDump;
             comp.machineState.writeln;
@@ -249,6 +249,7 @@ class EmulatorScreenWidget : ImageWidget
     Keyboard keyboard;
     long stepCounter;
     long clockCounter;
+    private ubyte bogusCyclesRemaining;
     void delegate() onPauseStateChanged;
 
     private bool _paused = true;
@@ -271,9 +272,10 @@ class EmulatorScreenWidget : ImageWidget
 
     void reset()
     {
+        comp.reset();
         clockCounter = 0;
         stepCounter = 0;
-        comp.reset();
+        bogusCyclesRemaining = 0;
         paused = true;
     }
 
@@ -296,13 +298,11 @@ class EmulatorScreenWidget : ImageWidget
 
     void tick()
     {
-        static ubyte cyclesRemaining;
-
         try
         {
-            if(cyclesRemaining == 0)
+            if(bogusCyclesRemaining == 0)
             {
-                cyclesRemaining = step();
+                bogusCyclesRemaining = step();
 
                 if(comp.cpu.regs.ds != 0) // breakpoint check
                 {
@@ -312,12 +312,12 @@ class EmulatorScreenWidget : ImageWidget
                 }
             }
 
-            cyclesRemaining--;
+            bogusCyclesRemaining--;
             clockCounter++;
         }
         catch(Dcpu16Exception e)
         {
-            cyclesRemaining = 0;
+            bogusCyclesRemaining = 0;
             paused = true;
 
             if(onExceptionDg)
@@ -325,13 +325,24 @@ class EmulatorScreenWidget : ImageWidget
         }
     }
 
-    ubyte step()
+    private ubyte step()
     {
         import dcpu16.emulator.exception;
 
         scope(success) stepCounter++;
 
         return comp.cpu.step();
+    }
+
+    void oneStep()
+    {
+        try
+        {
+            clockCounter += step();
+        }
+        catch(Dcpu16Exception e)
+            if(onExceptionDg)
+                onExceptionDg(e);
     }
 
     override bool animating() { return true; }
