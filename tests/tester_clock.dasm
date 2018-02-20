@@ -21,20 +21,20 @@
             jsr clock_init
             set a, 0  ; Cleans a value
 
-            ; Loop doing a++ and nothing more. A caouldbe used to check how many cycles
+; Loop doing a++ and nothing more. A could be used to check how many cycles
 :looper
             add a, 1
             set pc, looper
 
-            ; Checks Clock device and stores his dev number
-            :store_clk_dev
-            ife a, 0xb402
+; Checks Clock device and stores his dev number
+:store_clk_dev
+            ;ife a, 0xb402
             ife b, 0x12d0 ; Clock
               set [dev_clk], i
             set pc, pop
 
-            ; Set clock configuration
-            :clock_init
+; Set clock configuration
+:clock_init
             ife [dev_clk], 0xFFFF
               set pc,pop
             set a, 0
