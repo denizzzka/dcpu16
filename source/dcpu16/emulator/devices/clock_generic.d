@@ -61,7 +61,7 @@ class Clock : IDevice
         {
             timer++;
 
-            if(timer >= timerInterval)
+            if(timer >= 60 / timerInterval)
             {
                 timer = 0;
                 ticks++;

@@ -73,16 +73,24 @@ pure struct CPU
         intQueue.reset;
     }
 
-    /// Returns: clock cycles cost of executed step
-    ubyte step()
+    private void setPcIfInterrupt()
     {
         if(intQueue.isTriggeringEnabled && !intQueue.empty)
         {
-            auto msg = intQueue.pop;
-
-            if(regs.ia)
-                regs.PC = regs.ia;
+            with(regs)
+            {
+                push(pc);
+                push(A);
+                PC = ia;
+                A = intQueue.pop;
+            }
         }
+    }
+
+    /// Returns: clock cycles cost of executed step
+    ubyte step()
+    {
+        setPcIfInterrupt();
 
         Instruction ins = getCurrInstruction;
         regs.pc++;
@@ -257,7 +265,7 @@ pure struct CPU
             case IAG: a = ia; break;
             case IAS: ia = a; return;
             case RFI:
-                intQueue.isTriggeringEnabled = false;
+                intQueue.isTriggeringEnabled = true;
                 A = pop();
                 pc = pop();
                 return;
@@ -452,8 +460,7 @@ private struct InteruptQueue
 
     void reset() pure
     {
-        queue.length = 0;
-        isTriggeringEnabled = true;
+        this = InteruptQueue();
     }
 }
 
