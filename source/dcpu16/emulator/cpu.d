@@ -462,10 +462,10 @@ enum Opcode : ubyte
     special, /// Special opcode
     SET, /// sets b to a
     ADD, /// sets b to b+a, sets EX to 0x0001 if there's an overflow, 0x0 otherwise
-    SUB, /// sets EX to 0xffff if there's an underflow, 0x0 otherwise
-    MUL, /// sets EX to ((b*a)>>16)&0xffff (treats b, a as unsigned)
+    SUB, /// sets b to b-a, sets EX to 0xffff if there's an underflow, 0x0 otherwise
+    MUL, /// sets b to b*a, sets EX to ((b*a)>>16)&0xffff (treats b, a as unsigned)
     MLI, /// like MUL, but treat b, a as signed
-    DIV, /// sets EX to ((b<<16)/a)&0xffff. if a==0, sets b and EX to 0 instead. (treats b, a as unsigned)
+    DIV, /// sets b to b/a, sets EX to ((b<<16)/a)&0xffff. if a==0, sets b and EX to 0 instead. (treats b, a as unsigned)
     DVI, /// like DIV, but treat b, a as signed. Rounds towards 0
     MOD, /// sets b to b%a. if a==0, sets b to 0 instead.
     MDI, /// like MOD, but treat b, a as signed. (MDI -7, 16 == -7)
