@@ -6,6 +6,7 @@ DCPU-16 emulator
 TODO:
 
 * Keyboard
+* (internal) Memory changes subscription
 * Other standard hardware support
 * Sound chip support
 * Add new hardware: mouse
