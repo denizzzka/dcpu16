@@ -78,6 +78,8 @@ extern (C) int UIAppMain(string[] args)
     comp.attachDevice = kbd;
 
     auto emulScr = new EmulatorScreenWidget("EMUL_SCREEN_0", comp, disp);
+    emulScr.focusable = true;
+
     window.mainWidget.childById("EMUL_SCREEN_GRP").addChild = emulScr;
     emulScr.keyboard = kbd;
 
@@ -501,18 +503,49 @@ class EmulatorScreenWidget : ImageWidget
 
     override bool onKeyEvent(KeyEvent e)
     {
-        if(e.action == KeyAction.Text)
+        import dlangui.core.logger;
+        import std.conv;
+        import std.stdio;
+        writeln("================ key event"~e.to!string);
+
+        if(e.action == KeyAction.KeyDown)
         {
-            import dlangui.core.logger;
-            import std.conv;
-            Log.d("================ key event"~e.to!string);
+            Key r;
 
-            char code = e.text[0].to!string[0]; //FIXME: wtf?!
-
-            // Numbers and capital letters
-            if(code >= 0x30 && code <= 0x5a)
+            with(KeyCode)
+            with(Key)
+            switch(e.flags)
             {
-                Log.d(">>>>> key pressed"~e.to!string);
+                case LSHIFT:
+                case RSHIFT:    r = Shift; break;
+
+                case LCONTROL:
+                case RCONTROL:  r = Control; break;
+
+                case LALT:
+                case RALT:      r = Alt; break;
+
+                case INS:       r = Insert; break;
+                case RETURN:    r = Return; break;
+                case BACK:      r = Backspace; break;
+                case LEFT:      r = ArrowLeft; break;
+                case RIGHT:     r = ArrowRight; break;
+                case UP:        r = ArrowUp; break;
+                case DOWN:      r = ArrowDown; break;
+
+                default:
+                    return true;
+            }
+
+            keyboard.keyPressed(r);
+        }
+        else if(e.action == KeyAction.Text)
+        {
+            char code = e.text[0].to!string[0];
+
+            // ASCII printable chars and DEL
+            if(code >= 0x20 && code <= 0x7f)
+            {
                 keyboard.keyPressed(code);
             }
         }

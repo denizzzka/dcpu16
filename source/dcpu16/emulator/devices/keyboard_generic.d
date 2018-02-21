@@ -71,7 +71,6 @@ class Keyboard : IDevice
         }
     }
 
-    /// ASCII code or enum Key
     void keyPressed(ubyte ascii_or_enum_Key)
     {
         assert(ascii_or_enum_Key != 0);
