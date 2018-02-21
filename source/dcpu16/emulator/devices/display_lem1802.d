@@ -227,9 +227,9 @@ class LEM1802 : IDevice
         return ret;
     }
 
-    PaletteColor getColor(ubyte paletteIndex) const
+    PaletteColor getColor(ubyte paletteIdx) const
     {
-        ushort c = palette[paletteIndex];
+        ushort c = isSplashDisplayed ? defaultPalette[paletteIdx] : palette[paletteIdx];
 
         return PaletteColor(c);
     }
