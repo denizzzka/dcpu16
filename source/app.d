@@ -89,14 +89,14 @@ extern (C) int UIAppMain(string[] args)
     widget!("MEM_DUMP", StringGridWidget).showColHeaders = false;
 
     foreach(int i; 0 .. cast(int) emulScr.comp.mem.length / memDumpColNum)
-        widget!("MEM_DUMP", StringGridWidget).setRowTitle(i, format!dchar("%#06x", i * memDumpColNum));
+        widget!("MEM_DUMP", StringGridWidget).setRowTitle(i, format("%#06x", i * memDumpColNum).to!dstring);
 
     void refreshMemDump()
     {
         const m = comp.mem;
         foreach(int row; 0 .. cast(int) m.length / memDumpColNum)
             foreach(int col; 0 .. memDumpColNum)
-                widget!("MEM_DUMP", StringGridWidget).setCellText(col, row, format!dchar("%04x", m[row * memDumpColNum + col]));
+                widget!("MEM_DUMP", StringGridWidget).setCellText(col, row, format("%04x", m[row * memDumpColNum + col]).to!dstring);
     }
 
     refreshMemDump;
